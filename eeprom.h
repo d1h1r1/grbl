@@ -1,22 +1,19 @@
 /*
-  eeprom.h - EEPROM methods
-  Part of Grbl
+  eeprom.h - EEPROM方法
+  Grbl的一部分
 
-  Copyright (c) 2009-2011 Simen Svale Skogsrud
+  版权所有 (c) 2009-2011 Simen Svale Skogsrud
 
-  Grbl is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+  Grbl是一个自由软件：您可以根据自由软件基金会发布的GNU通用公共许可证的条款，重新发布和/或修改
+  该软件，版本3或（根据您的选择）任何更新的版本。
 
-  Grbl is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  Grbl的发布是希望它能有用，
+  但没有任何保证；甚至不含有
+  适销性或特定用途的隐含保证。有关更多详细信息，请参见GNU通用公共许可证。
 
-  You should have received a copy of the GNU General Public License
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
+  您应该已随Grbl一起收到GNU通用公共许可证的副本。如果没有，请参见 <http://www.gnu.org/licenses/>。
 */
+
 
 #ifndef eeprom_h
 #define eeprom_h
