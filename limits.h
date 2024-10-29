@@ -1,41 +1,28 @@
 /*
-  limits.h - code pertaining to limit-switches and performing the homing cycle
-  Part of Grbl
+  limits.h - 与限位开关和执行归位循环相关的代码
+  Grbl 的一部分
 
-  Copyright (c) 2012-2016 Sungeun K. Jeon for Gnea Research LLC
-  Copyright (c) 2009-2011 Simen Svale Skogsrud
+  版权所有 (c) 2012-2016 Sungeun K. Jeon，Gnea Research LLC
+  版权所有 (c) 2009-2011 Simen Svale Skogsrud
 
-  Grbl is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+  Grbl 是自由软件：你可以根据自由软件基金会发布的 GNU 通用公共许可证的条款重新分发和/或修改它，版本为许可证的第 3 版，或（根据你的选择）任何更高版本。
 
-  Grbl is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  Grbl 以希望它会有用的方式发布，但不提供任何担保；甚至不包括对适销性或特定用途适用性的隐含担保。有关更多详细信息，请参阅 GNU 通用公共许可证。
 
-  You should have received a copy of the GNU General Public License
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
+  你应该已经收到一份 GNU 通用公共许可证的副本，随 Grbl 一起。如果没有，请参阅 <http://www.gnu.org/licenses/>。
 */
 
-#ifndef limits_h
-#define limits_h
-
-
-// Initialize the limits module
+// 初始化限位模块
 void limits_init();
 
-// Disables hard limits.
+// 禁用硬限制。
 void limits_disable();
 
-// Returns limit state as a bit-wise uint8 variable.
+// 返回限位状态，作为位域无符号整型变量。
 uint8_t limits_get_state();
 
-// Perform one portion of the homing cycle based on the input settings.
+// 根据输入设置执行归位循环的一部分。
 void limits_go_home(uint8_t cycle_mask);
 
-// Check for soft limit violations
+// 检查软限制违规
 void limits_soft_check(float *target);
-
-#endif

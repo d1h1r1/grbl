@@ -1,21 +1,19 @@
 /*
-  jog.h - Jogging methods
-  Part of Grbl
+  jog.h - 移动方法
+  Grbl 的一部分
 
-  Copyright (c) 2016 Sungeun K. Jeon for Gnea Research LLC
+  版权所有 (c) 2016 Sungeun K. Jeon，Gnea Research LLC
 
-  Grbl is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+  Grbl 是自由软件：你可以在自由软件基金会发布的 GNU 通用公共许可证条款下重新分发和/或修改
+  它，许可证版本为 3，或（根据你的选择）任何更高版本。
 
-  Grbl is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  Grbl 的发布是为了希望它能有用，
+  但不提供任何担保；甚至没有关于
+  适销性或适用于特定目的的隐含担保。有关详细信息，请参见
+  GNU 通用公共许可证。
 
-  You should have received a copy of the GNU General Public License
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
+  你应该已经收到一份 GNU 通用公共许可证的副本
+  与 Grbl 一起。如果没有，请参见 <http://www.gnu.org/licenses/>。
 */
 
 #ifndef jog_h
@@ -23,10 +21,10 @@
 
 #include "gcode.h"
 
-// System motion line numbers must be zero.
+// 系统运动行号必须为零。
 #define JOG_LINE_NUMBER 0
 
-// Sets up valid jog motion received from g-code parser, checks for soft-limits, and executes the jog.
+// 设置从 G-code 解析器接收到的有效移动命令，检查软限位，并执行移动。
 uint8_t jog_execute(plan_line_data_t *pl_data, parser_block_t *gc_block);
 
 #endif

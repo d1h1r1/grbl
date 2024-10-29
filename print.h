@@ -1,22 +1,15 @@
 /*
-  print.h - Functions for formatting output strings
-  Part of Grbl
+  print.h - 格式化输出字符串的函数
+  Grbl 的一部分
 
-  Copyright (c) 2011-2016 Sungeun K. Jeon for Gnea Research LLC
-  Copyright (c) 2009-2011 Simen Svale Skogsrud
+  版权所有 (c) 2011-2016 Sungeun K. Jeon，Gnea Research LLC
+  版权所有 (c) 2009-2011 Simen Svale Skogsrud
 
-  Grbl is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+  Grbl 是自由软件：你可以根据自由软件基金会发布的 GNU 通用公共许可证的条款重新分发和/或修改它，版本为许可证的第 3 版，或（根据你的选择）任何更高版本。
 
-  Grbl is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  Grbl 以希望它会有用的方式发布，但不提供任何担保；甚至不包括对适销性或特定用途适用性的隐含担保。有关更多详细信息，请参阅 GNU 通用公共许可证。
 
-  You should have received a copy of the GNU General Public License
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
+  你应该已经收到一份 GNU 通用公共许可证的副本，随 Grbl 一起。如果没有，请参阅 <http://www.gnu.org/licenses/>。
 */
 
 #ifndef print_h
@@ -31,21 +24,21 @@ void printInteger(long n);
 
 void print_uint32_base10(uint32_t n);
 
-// Prints an uint8 variable in base 10.
+// 以十进制打印 uint8 变量。
 void print_uint8_base10(uint8_t n);
 
-// Prints an uint8 variable in base 2 with desired number of desired digits.
+// 以二进制打印 uint8 变量，具有所需的位数。
 void print_uint8_base2_ndigit(uint8_t n, uint8_t digits);
 
 void printFloat(float n, uint8_t decimal_places);
 
-// Floating value printing handlers for special variables types used in Grbl.
-//  - CoordValue: Handles all position or coordinate values in inches or mm reporting.
-//  - RateValue: Handles feed rate and current velocity in inches or mm reporting.
+// 用于 Grbl 中特殊变量类型的浮点值打印处理程序。
+//  - CoordValue: 处理以英寸或毫米报告的所有位置或坐标值。
+//  - RateValue: 处理以英寸或毫米报告的进给速率和当前速度。
 void printFloat_CoordValue(float n);
 void printFloat_RateValue(float n);
 
-// Debug tool to print free memory in bytes at the called point. Not used otherwise.
+// 调试工具，用于在调用点打印剩余内存（以字节为单位）。否则不使用。
 void printFreeMemory();
 
 #endif

@@ -1,43 +1,39 @@
 /*
-  probe.h - code pertaining to probing methods
-  Part of Grbl
+  probe.h - 与探测方法相关的代码
+  Grbl的一部分
 
-  Copyright (c) 2014-2016 Sungeun K. Jeon for Gnea Research LLC
+  版权所有 (c) 2014-2016 Sungeun K. Jeon for Gnea Research LLC
 
-  Grbl is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+  Grbl是自由软件：您可以根据自由软件基金会发布的GNU通用公共许可证的条款重新分发和/或修改
+  它，许可证的版本为3，或（根据您的选择）任何更高版本。
 
-  Grbl is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  Grbl的分发是希望它会有用，
+  但不提供任何担保；甚至没有对适销性或特定用途适用性的暗示担保。有关详细信息，请参见
+  GNU通用公共许可证。
 
-  You should have received a copy of the GNU General Public License
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
+  您应该已经收到了GNU通用公共许可证的副本
+  随Grbl一起。如果没有，请参见<http://www.gnu.org/licenses/>。
 */
 
 #ifndef probe_h
 #define probe_h
 
-// Values that define the probing state machine.
-#define PROBE_OFF     0 // Probing disabled or not in use. (Must be zero.)
-#define PROBE_ACTIVE  1 // Actively watching the input pin.
+// 定义探测状态机的值。
+#define PROBE_OFF     0 // 禁用探测或未使用。（必须为零。）
+#define PROBE_ACTIVE  1 // 正在主动监视输入引脚。
 
-// Probe pin initialization routine.
+// 探针引脚初始化例程。
 void probe_init();
 
-// Called by probe_init() and the mc_probe() routines. Sets up the probe pin invert mask to
-// appropriately set the pin logic according to setting for normal-high/normal-low operation
-// and the probing cycle modes for toward-workpiece/away-from-workpiece.
+// 由probe_init()和mc_probe()例程调用。设置探针引脚的反转掩码，以
+// 根据正常高/正常低操作的设置和朝向工件/远离工件的探测循环模式
+// 适当地设置引脚逻辑。
 void probe_configure_invert_mask(uint8_t is_probe_away);
 
-// Returns probe pin state. Triggered = true. Called by gcode parser and probe state monitor.
+// 返回探针引脚状态。触发 = 真。由G代码解析器和探针状态监视器调用。
 uint8_t probe_get_state();
 
-// Monitors probe pin state and records the system position when detected. Called by the
-// stepper ISR per ISR tick.
+// 监视探针引脚状态并在检测到时记录系统位置。由步进电机ISR每个ISR滴答调用。
 void probe_state_monitor();
 
 #endif

@@ -1,100 +1,97 @@
 /*
-  main.c - An embedded CNC Controller with rs274/ngc (g-code) support
-  Part of Grbl
+  main.c - 一个支持 rs274/ngc (G-code) 的嵌入式 CNC 控制器
+  是 Grbl 的一部分
 
-  Copyright (c) 2011-2016 Sungeun K. Jeon for Gnea Research LLC
-  Copyright (c) 2009-2011 Simen Svale Skogsrud
+  版权所有 (c) 2011-2016 Sungeun K. Jeon, Gnea Research LLC
+  版权所有 (c) 2009-2011 Simen Svale Skogsrud
 
-  Grbl is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+  Grbl 是自由软件：您可以在自由软件基金会发布的 GNU 通用公共许可证的条款下重新发布和/或修改它，
+  该许可证的版本可以是许可证的第 3 版，或者（由您选择）任何更高版本。
 
-  Grbl is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  Grbl 的发布是希望它能够有用，
+  但没有任何保证；甚至没有适销性或特定用途适用性的隐含保证。有关更多详细信息，请参见
+  GNU 通用公共许可证。
 
-  You should have received a copy of the GNU General Public License
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
+  您应该已经收到了 GNU 通用公共许可证的副本
+  以及 Grbl。如果没有，请访问 <http://www.gnu.org/licenses/>。
 */
 
 #include "grbl.h"
 
 
-// Declare system global variable structure
+// 声明系统全局变量结构
 system_t sys;
 
 
 int main(void)
 {
-  // Initialize system upon power-up.
-  serial_init();   // Setup serial baud rate and interrupts
-  settings_init(); // Load Grbl settings from EEPROM
-  stepper_init();  // Configure stepper pins and interrupt timers
-  system_init();   // Configure pinout pins and pin-change interrupt
+  // 在上电时初始化系统。
+  serial_init();   // 设置串行波特率和中断
+  settings_init(); // 从 EEPROM 加载 Grbl 设置
+  stepper_init();  // 配置步进电机引脚和中断定时器
+  system_init();   // 配置引脚引脚和引脚变更中断
 
-  memset(sys_position,0,sizeof(sys_position)); // Clear machine position.
-  sei(); // Enable interrupts
+  memset(sys_position, 0, sizeof(sys_position)); // 清除机器位置。
+  sei(); // 启用中断
 
-  // Initialize system state.
+  // 初始化系统状态。
   #ifdef FORCE_INITIALIZATION_ALARM
-    // Force Grbl into an ALARM state upon a power-cycle or hard reset.
+    // 在电源循环或硬重置时强制 Grbl 进入 ALARM 状态。
     sys.state = STATE_ALARM;
   #else
     sys.state = STATE_IDLE;
   #endif
   
-  // Check for power-up and set system alarm if homing is enabled to force homing cycle
-  // by setting Grbl's alarm state. Alarm locks out all g-code commands, including the
-  // startup scripts, but allows access to settings and internal commands. Only a homing
-  // cycle '$H' or kill alarm locks '$X' will disable the alarm.
-  // NOTE: The startup script will run after successful completion of the homing cycle, but
-  // not after disabling the alarm locks. Prevents motion startup blocks from crashing into
-  // things uncontrollably. Very bad.
+  // 检查上电并设置系统警报，如果启用了归位，则强制归位周期
+  // 通过设置 Grbl 的警报状态。警报锁定所有 G-code 命令，包括
+  // 启动脚本，但允许访问设置和内部命令。只有归位
+  // 周期 '$H' 或解除警报锁 '$X' 将禁用警报。
+  // 注意：启动脚本将在归位周期成功完成后运行，但
+  // 不会在解除警报锁后运行。防止运动启动块失控地撞击物体。
+  // 非常糟糕。
   #ifdef HOMING_INIT_LOCK
-    if (bit_istrue(settings.flags,BITFLAG_HOMING_ENABLE)) { sys.state = STATE_ALARM; }
+    if (bit_istrue(settings.flags, BITFLAG_HOMING_ENABLE)) { sys.state = STATE_ALARM; }
   #endif
 
-  // Grbl initialization loop upon power-up or a system abort. For the latter, all processes
-  // will return to this loop to be cleanly re-initialized.
+  // Grbl 在上电或系统中止时的初始化循环。对于后者，所有进程
+  // 将返回到此循环以进行干净的重新初始化。
   for(;;) {
 
-    // Reset system variables.
+    // 重置系统变量。
     uint8_t prior_state = sys.state;
-    memset(&sys, 0, sizeof(system_t)); // Clear system struct variable.
+    memset(&sys, 0, sizeof(system_t)); // 清除系统结构变量。
     sys.state = prior_state;
-    sys.f_override = DEFAULT_FEED_OVERRIDE;  // Set to 100%
-    sys.r_override = DEFAULT_RAPID_OVERRIDE; // Set to 100%
-    sys.spindle_speed_ovr = DEFAULT_SPINDLE_SPEED_OVERRIDE; // Set to 100%
-		memset(sys_probe_position,0,sizeof(sys_probe_position)); // Clear probe position.
+    sys.f_override = DEFAULT_FEED_OVERRIDE;  // 设置为 100%
+    sys.r_override = DEFAULT_RAPID_OVERRIDE; // 设置为 100%
+    sys.spindle_speed_ovr = DEFAULT_SPINDLE_SPEED_OVERRIDE; // 设置为 100%
+    memset(sys_probe_position, 0, sizeof(sys_probe_position)); // 清除探测位置。
     sys_probe_state = 0;
     sys_rt_exec_state = 0;
     sys_rt_exec_alarm = 0;
     sys_rt_exec_motion_override = 0;
     sys_rt_exec_accessory_override = 0;
 
-    // Reset Grbl primary systems.
-    serial_reset_read_buffer(); // Clear serial read buffer
-    gc_init(); // Set g-code parser to default state
+    // 重置 Grbl 主要系统。
+    serial_reset_read_buffer(); // 清除串行读取缓冲区
+    gc_init(); // 将 G-code 解析器设置为默认状态
     spindle_init();
     coolant_init();
     limits_init();
     probe_init();
     sleep_init();
-    plan_reset(); // Clear block buffer and planner variables
-    st_reset(); // Clear stepper subsystem variables.
+    plan_reset(); // 清除块缓冲区和规划器变量
+    st_reset(); // 清除步进电机子系统变量。
 
-    // Sync cleared gcode and planner positions to current system position.
+    // 将清除的 G-code 和规划器位置同步到当前系统位置。
     plan_sync_position();
     gc_sync_position();
 
-    // Print welcome message. Indicates an initialization has occured at power-up or with a reset.
+    // 打印欢迎消息。指示在上电或重置时发生了初始化。
     report_init_message();
 
-    // Start Grbl main loop. Processes program inputs and executes them.
+    // 启动 Grbl 主循环。处理程序输入并执行它们。
     protocol_main_loop();
 
   }
-  return 0;   /* Never reached */
+  return 0;   /* 永远不会到达 */
 }

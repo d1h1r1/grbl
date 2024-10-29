@@ -1,62 +1,60 @@
 /*
-  serial.c - Low level functions for sending and recieving bytes via the serial port
-  Part of Grbl
+  serial.c - 通过串口发送和接收字节的低级函数
+  Grbl 的一部分
 
-  Copyright (c) 2011-2016 Sungeun K. Jeon for Gnea Research LLC
-  Copyright (c) 2009-2011 Simen Svale Skogsrud
+  版权 (c) 2011-2016 Sungeun K. Jeon，Gnea Research LLC
+  版权 (c) 2009-2011 Simen Svale Skogsrud
 
-  Grbl is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+  Grbl 是自由软件：您可以根据自由软件基金会发布的 GNU 通用公共许可证的条款重新分发和/或修改它，
+  无论是许可证的第 3 版，还是（根据您的选择）任何更高版本。
 
-  Grbl is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  Grbl 的发布希望能对您有用，
+  但不提供任何担保；甚至不包括适销性或特定用途适用性的隐含担保。有关更多详细信息，请参见
+  GNU 通用公共许可证。
 
-  You should have received a copy of the GNU General Public License
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
+  您应该已收到 GNU 通用公共许可证的副本
+  随 Grbl 一起。如果没有，请访问 <http://www.gnu.org/licenses/>。
 */
+
 
 #include "grbl.h"
 
-#define RX_RING_BUFFER (RX_BUFFER_SIZE+1)
-#define TX_RING_BUFFER (TX_BUFFER_SIZE+1)
+#define RX_RING_BUFFER (RX_BUFFER_SIZE+1) // 接收环形缓冲区的大小
+#define TX_RING_BUFFER (TX_BUFFER_SIZE+1) // 发送环形缓冲区的大小
 
-uint8_t serial_rx_buffer[RX_RING_BUFFER];
-uint8_t serial_rx_buffer_head = 0;
-volatile uint8_t serial_rx_buffer_tail = 0;
+uint8_t serial_rx_buffer[RX_RING_BUFFER]; // 接收缓冲区
+uint8_t serial_rx_buffer_head = 0; // 接收缓冲区头部索引
+volatile uint8_t serial_rx_buffer_tail = 0; // 接收缓冲区尾部索引
 
-uint8_t serial_tx_buffer[TX_RING_BUFFER];
-uint8_t serial_tx_buffer_head = 0;
-volatile uint8_t serial_tx_buffer_tail = 0;
+uint8_t serial_tx_buffer[TX_RING_BUFFER]; // 发送缓冲区
+uint8_t serial_tx_buffer_head = 0; // 发送缓冲区头部索引
+volatile uint8_t serial_tx_buffer_tail = 0; // 发送缓冲区尾部索引
 
 
-// Returns the number of bytes available in the RX serial buffer.
+// 返回 RX 串口缓冲区中可用的字节数。
 uint8_t serial_get_rx_buffer_available()
 {
-  uint8_t rtail = serial_rx_buffer_tail; // Copy to limit multiple calls to volatile
+  uint8_t rtail = serial_rx_buffer_tail; // 复制以限制对 volatile 的多次调用
   if (serial_rx_buffer_head >= rtail) { return(RX_BUFFER_SIZE - (serial_rx_buffer_head-rtail)); }
   return((rtail-serial_rx_buffer_head-1));
 }
 
 
-// Returns the number of bytes used in the RX serial buffer.
-// NOTE: Deprecated. Not used unless classic status reports are enabled in config.h.
+// 返回 RX 串口缓冲区中已使用的字节数。
+// 注意：已废弃。除非在 config.h 中启用经典状态报告，否则不会使用。
 uint8_t serial_get_rx_buffer_count()
 {
-  uint8_t rtail = serial_rx_buffer_tail; // Copy to limit multiple calls to volatile
+  uint8_t rtail = serial_rx_buffer_tail; // 复制以限制对 volatile 的多次调用
   if (serial_rx_buffer_head >= rtail) { return(serial_rx_buffer_head-rtail); }
   return (RX_BUFFER_SIZE - (rtail-serial_rx_buffer_head));
 }
 
 
-// Returns the number of bytes used in the TX serial buffer.
-// NOTE: Not used except for debugging and ensuring no TX bottlenecks.
+// 返回 TX 串口缓冲区中已使用的字节数。
+// 注意：仅用于调试和确保没有 TX 瓶颈。
 uint8_t serial_get_tx_buffer_count()
 {
-  uint8_t ttail = serial_tx_buffer_tail; // Copy to limit multiple calls to volatile
+  uint8_t ttail = serial_tx_buffer_tail; // 复制以限制对 volatile 的多次调用
   if (serial_tx_buffer_head >= ttail) { return(serial_tx_buffer_head-ttail); }
   return (TX_RING_BUFFER - (ttail-serial_tx_buffer_head));
 }
@@ -64,70 +62,70 @@ uint8_t serial_get_tx_buffer_count()
 
 void serial_init()
 {
-  // Set baud rate
+  // 设置波特率
   #if BAUD_RATE < 57600
     uint16_t UBRR0_value = ((F_CPU / (8L * BAUD_RATE)) - 1)/2 ;
-    UCSR0A &= ~(1 << U2X0); // baud doubler off  - Only needed on Uno XXX
+    UCSR0A &= ~(1 << U2X0); // 关闭波特率倍增 - 仅在 Uno 上需要
   #else
     uint16_t UBRR0_value = ((F_CPU / (4L * BAUD_RATE)) - 1)/2;
-    UCSR0A |= (1 << U2X0);  // baud doubler on for high baud rates, i.e. 115200
+    UCSR0A |= (1 << U2X0);  // 对于高波特率（如 115200），开启波特率倍增
   #endif
-  UBRR0H = UBRR0_value >> 8;
-  UBRR0L = UBRR0_value;
+  UBRR0H = UBRR0_value >> 8; // 设置高字节
+  UBRR0L = UBRR0_value; // 设置低字节
 
-  // enable rx, tx, and interrupt on complete reception of a byte
+  // 启用接收、发送和接收完整字节的中断
   UCSR0B |= (1<<RXEN0 | 1<<TXEN0 | 1<<RXCIE0);
 
-  // defaults to 8-bit, no parity, 1 stop bit
+  // 默认为 8 位，无奇偶校验，1 个停止位
 }
 
 
-// Writes one byte to the TX serial buffer. Called by main program.
+// 向 TX 串口缓冲区写入一个字节。由主程序调用。
 void serial_write(uint8_t data) {
-  // Calculate next head
+  // 计算下一个头部索引
   uint8_t next_head = serial_tx_buffer_head + 1;
   if (next_head == TX_RING_BUFFER) { next_head = 0; }
 
-  // Wait until there is space in the buffer
+  // 等待缓冲区有空间
   while (next_head == serial_tx_buffer_tail) {
-    // TODO: Restructure st_prep_buffer() calls to be executed here during a long print.
-    if (sys_rt_exec_state & EXEC_RESET) { return; } // Only check for abort to avoid an endless loop.
+    // TODO: 重新构建 st_prep_buffer() 的调用，以便在长打印期间在这里执行。
+    if (sys_rt_exec_state & EXEC_RESET) { return; } // 仅检查中止以避免无限循环。
   }
 
-  // Store data and advance head
+  // 存储数据并前进头部
   serial_tx_buffer[serial_tx_buffer_head] = data;
   serial_tx_buffer_head = next_head;
 
-  // Enable Data Register Empty Interrupt to make sure tx-streaming is running
+  // 启用数据寄存器空中断以确保 TX 流传输正在运行
   UCSR0B |=  (1 << UDRIE0);
 }
 
 
-// Data Register Empty Interrupt handler
+// 数据寄存器空中断处理程序
 ISR(SERIAL_UDRE)
 {
-  uint8_t tail = serial_tx_buffer_tail; // Temporary serial_tx_buffer_tail (to optimize for volatile)
+  uint8_t tail = serial_tx_buffer_tail; // 临时的 serial_tx_buffer_tail（以优化 volatile）
 
-  // Send a byte from the buffer
+  // 从缓冲区发送一个字节
   UDR0 = serial_tx_buffer[tail];
 
-  // Update tail position
+  // 更新尾部位置
   tail++;
   if (tail == TX_RING_BUFFER) { tail = 0; }
 
   serial_tx_buffer_tail = tail;
 
-  // Turn off Data Register Empty Interrupt to stop tx-streaming if this concludes the transfer
+  // 关闭数据寄存器空中断以停止 TX 流传输，如果这结束了传输
   if (tail == serial_tx_buffer_head) { UCSR0B &= ~(1 << UDRIE0); }
 }
 
 
-// Fetches the first byte in the serial read buffer. Called by main program.
+// 获取串口读取缓冲区中的第一个字节。由主程序调用。
 uint8_t serial_read()
 {
-  uint8_t tail = serial_rx_buffer_tail; // Temporary serial_rx_buffer_tail (to optimize for volatile)
+  uint8_t tail = serial_rx_buffer_tail; // 临时的 serial_rx_buffer_tail（以优化 volatile）
   if (serial_rx_buffer_head == tail) {
-    return SERIAL_NO_DATA;
+    return SERIAL_NO_DATA; // 无数据可读
   } else {
     uint8_t data = serial_rx_buffer[tail];
 
@@ -135,34 +133,34 @@ uint8_t serial_read()
     if (tail == RX_RING_BUFFER) { tail = 0; }
     serial_rx_buffer_tail = tail;
 
-    return data;
+    return data; // 返回读取的数据
   }
 }
 
 
 ISR(SERIAL_RX)
 {
-  uint8_t data = UDR0;
+  uint8_t data = UDR0; // 从接收数据寄存器读取数据
   uint8_t next_head;
 
-  // Pick off realtime command characters directly from the serial stream. These characters are
-  // not passed into the main buffer, but these set system state flag bits for realtime execution.
+  // 从串行流中直接获取实时命令字符。这些字符
+  // 不会传递到主缓冲区，而是设置系统状态标志位以便实时执行。
   switch (data) {
-    case CMD_RESET:         mc_reset(); break; // Call motion control reset routine.
-    case CMD_STATUS_REPORT: system_set_exec_state_flag(EXEC_STATUS_REPORT); break; // Set as true
-    case CMD_CYCLE_START:   system_set_exec_state_flag(EXEC_CYCLE_START); break; // Set as true
-    case CMD_FEED_HOLD:     system_set_exec_state_flag(EXEC_FEED_HOLD); break; // Set as true
+    case CMD_RESET:         mc_reset(); break; // 调用运动控制重置例程。
+    case CMD_STATUS_REPORT: system_set_exec_state_flag(EXEC_STATUS_REPORT); break; // 设置为真
+    case CMD_CYCLE_START:   system_set_exec_state_flag(EXEC_CYCLE_START); break; // 设置为真
+    case CMD_FEED_HOLD:     system_set_exec_state_flag(EXEC_FEED_HOLD); break; // 设置为真
     default :
-      if (data > 0x7F) { // Real-time control characters are extended ACSII only.
+      if (data > 0x7F) { // 实时控制字符仅为扩展 ASCII。
         switch(data) {
-          case CMD_SAFETY_DOOR:   system_set_exec_state_flag(EXEC_SAFETY_DOOR); break; // Set as true
+          case CMD_SAFETY_DOOR:   system_set_exec_state_flag(EXEC_SAFETY_DOOR); break; // 设置为真
           case CMD_JOG_CANCEL:   
-            if (sys.state & STATE_JOG) { // Block all other states from invoking motion cancel.
+            if (sys.state & STATE_JOG) { // 阻止其他状态调用运动取消。
               system_set_exec_state_flag(EXEC_MOTION_CANCEL); 
             }
             break; 
           #ifdef DEBUG
-            case CMD_DEBUG_REPORT: {uint8_t sreg = SREG; cli(); bit_true(sys_rt_exec_debug,EXEC_DEBUG_REPORT); SREG = sreg;} break;
+            case CMD_DEBUG_REPORT: {uint8_t sreg = SREG; cli(); bit_true(sys_rt_exec_debug,EXEC_DEBUG_REPORT); SREG = sreg;} break; // 调试报告
           #endif
           case CMD_FEED_OVR_RESET: system_set_exec_motion_override_flag(EXEC_FEED_OVR_RESET); break;
           case CMD_FEED_OVR_COARSE_PLUS: system_set_exec_motion_override_flag(EXEC_FEED_OVR_COARSE_PLUS); break;
@@ -181,12 +179,12 @@ ISR(SERIAL_RX)
           case CMD_COOLANT_FLOOD_OVR_TOGGLE: system_set_exec_accessory_override_flag(EXEC_COOLANT_FLOOD_OVR_TOGGLE); break;
           case CMD_COOLANT_MIST_OVR_TOGGLE: system_set_exec_accessory_override_flag(EXEC_COOLANT_MIST_OVR_TOGGLE); break;
         }
-        // Throw away any unfound extended-ASCII character by not passing it to the serial buffer.
-      } else { // Write character to buffer
+        // 丢弃任何未找到的扩展 ASCII 字符，不将其传递到串口缓冲区。
+      } else { // 将字符写入缓冲区
         next_head = serial_rx_buffer_head + 1;
         if (next_head == RX_RING_BUFFER) { next_head = 0; }
 
-        // Write data to buffer unless it is full.
+        // 将数据写入缓冲区，除非已满。
         if (next_head != serial_rx_buffer_tail) {
           serial_rx_buffer[serial_rx_buffer_head] = data;
           serial_rx_buffer_head = next_head;
@@ -198,5 +196,5 @@ ISR(SERIAL_RX)
 
 void serial_reset_read_buffer()
 {
-  serial_rx_buffer_tail = serial_rx_buffer_head;
+  serial_rx_buffer_tail = serial_rx_buffer_head; // 重置读取缓冲区
 }

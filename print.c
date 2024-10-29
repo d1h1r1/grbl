@@ -1,22 +1,15 @@
 /*
-  print.c - Functions for formatting output strings
-  Part of Grbl
+  print.c - 格式化输出字符串的函数
+  Grbl 的一部分
 
-  Copyright (c) 2011-2016 Sungeun K. Jeon for Gnea Research LLC
-  Copyright (c) 2009-2011 Simen Svale Skogsrud
+  版权所有 (c) 2011-2016 Sungeun K. Jeon，Gnea Research LLC
+  版权所有 (c) 2009-2011 Simen Svale Skogsrud
 
-  Grbl is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+  Grbl 是自由软件：你可以根据自由软件基金会发布的 GNU 通用公共许可证的条款重新分发和/或修改它，版本为许可证的第 3 版，或（根据你的选择）任何更高版本。
 
-  Grbl is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  Grbl 以希望它会有用的方式发布，但不提供任何担保；甚至不包括对适销性或特定用途适用性的隐含担保。有关更多详细信息，请参阅 GNU 通用公共许可证。
 
-  You should have received a copy of the GNU General Public License
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
+  你应该已经收到一份 GNU 通用公共许可证的副本，随 Grbl 一起。如果没有，请参阅 <http://www.gnu.org/licenses/>。
 */
 
 #include "grbl.h"
@@ -29,7 +22,7 @@ void printString(const char *s)
 }
 
 
-// Print a string stored in PGM-memory
+// 打印存储在 PGM 内存中的字符串
 void printPgmString(const char *s)
 {
   char c;
@@ -40,7 +33,7 @@ void printPgmString(const char *s)
 
 // void printIntegerInBase(unsigned long n, unsigned long base)
 // {
-// 	unsigned char buf[8 * sizeof(long)]; // Assumes 8-bit chars.
+// 	unsigned char buf[8 * sizeof(long)]; // 假定 8 位字符。
 // 	unsigned long i = 0;
 //
 // 	if (n == 0) {
@@ -60,7 +53,7 @@ void printPgmString(const char *s)
 // }
 
 
-// Prints an uint8 variable in base 10.
+// 以十进制打印 uint8 变量。
 void print_uint8_base10(uint8_t n)
 {
   uint8_t digit_a = 0;
@@ -79,13 +72,13 @@ void print_uint8_base10(uint8_t n)
 }
 
 
-// Prints an uint8 variable in base 2 with desired number of desired digits.
+// 以二进制打印 uint8 变量，具有所需的位数。
 void print_uint8_base2_ndigit(uint8_t n, uint8_t digits) {
   unsigned char buf[digits];
   uint8_t i = 0;
 
   for (; i < digits; i++) {
-      buf[i] = n % 2 ;
+      buf[i] = n % 2;
       n /= 2;
   }
 
@@ -110,7 +103,7 @@ void print_uint32_base10(uint32_t n)
   }
 
   for (; i > 0; i--)
-    serial_write('0' + buf[i-1]);
+    serial_write('0' + buf[i - 1]);
 }
 
 
@@ -125,11 +118,10 @@ void printInteger(long n)
 }
 
 
-// Convert float to string by immediately converting to a long integer, which contains
-// more digits than a float. Number of decimal places, which are tracked by a counter,
-// may be set by the user. The integer is then efficiently converted to a string.
-// NOTE: AVR '%' and '/' integer operations are very efficient. Bitshifting speed-up
-// techniques are actually just slightly slower. Found this out the hard way.
+// 通过立即转换为长整型将浮点数转换为字符串，该整数包含比浮点数更多的数字。
+// 小数位数由计数器跟踪，可以由用户设置。然后有效地将整数转换为字符串。
+// 注意：AVR 的 '%' 和 '/' 整数操作非常高效。位移加速
+// 技术实际上只是稍微慢一点。通过艰难的方式发现了这一点。
 void printFloat(float n, uint8_t decimal_places)
 {
   if (n < 0) {
@@ -138,63 +130,64 @@ void printFloat(float n, uint8_t decimal_places)
   }
 
   uint8_t decimals = decimal_places;
-  while (decimals >= 2) { // Quickly convert values expected to be E0 to E-4.
+  while (decimals >= 2) { // 快速转换预期为 E0 到 E-4 的值。
     n *= 100;
     decimals -= 2;
   }
   if (decimals) { n *= 10; }
-  n += 0.5; // Add rounding factor. Ensures carryover through entire value.
+  n += 0.5; // 添加舍入因子。确保整个值的进位。
 
-  // Generate digits backwards and store in string.
+  // 反向生成数字并存储在字符串中。
   unsigned char buf[13];
   uint8_t i = 0;
   uint32_t a = (long)n;
-  while(a > 0) {
-    buf[i++] = (a % 10) + '0'; // Get digit
+  while (a > 0) {
+    buf[i++] = (a % 10) + '0'; // 获取数字
     a /= 10;
   }
   while (i < decimal_places) {
-     buf[i++] = '0'; // Fill in zeros to decimal point for (n < 1)
+     buf[i++] = '0'; // 填充小数点前的零（当 n < 1 时）
   }
-  if (i == decimal_places) { // Fill in leading zero, if needed.
+  if (i == decimal_places) { // 如有需要，填充前导零。
     buf[i++] = '0';
   }
 
-  // Print the generated string.
+  // 打印生成的字符串。
   for (; i > 0; i--) {
-    if (i == decimal_places) { serial_write('.'); } // Insert decimal point in right place.
-    serial_write(buf[i-1]);
+    if (i == decimal_places) { serial_write('.'); } // 在正确位置插入小数点。
+    serial_write(buf[i - 1]);
   }
 }
 
 
-// Floating value printing handlers for special variables types used in Grbl and are defined
-// in the config.h.
-//  - CoordValue: Handles all position or coordinate values in inches or mm reporting.
-//  - RateValue: Handles feed rate and current velocity in inches or mm reporting.
+// 用于 Grbl 中特殊变量类型的浮点值打印处理程序，定义在 config.h 中。
+//  - CoordValue: 处理以英寸或毫米报告的所有位置或坐标值。
+//  - RateValue: 处理以英寸或毫米报告的进给速率和当前速度。
 void printFloat_CoordValue(float n) {
-  if (bit_istrue(settings.flags,BITFLAG_REPORT_INCHES)) {
-    printFloat(n*INCH_PER_MM,N_DECIMAL_COORDVALUE_INCH);
+  if (bit_istrue(settings.flags, BITFLAG_REPORT_INCHES)) {
+    printFloat(n * INCH_PER_MM, N_DECIMAL_COORDVALUE_INCH);
   } else {
-    printFloat(n,N_DECIMAL_COORDVALUE_MM);
+    printFloat(n, N_DECIMAL_COORDVALUE_MM);
   }
 }
 
 void printFloat_RateValue(float n) {
-  if (bit_istrue(settings.flags,BITFLAG_REPORT_INCHES)) {
-    printFloat(n*INCH_PER_MM,N_DECIMAL_RATEVALUE_INCH);
+  if (bit_istrue(settings.flags, BITFLAG_REPORT_INCHES)) {
+    printFloat(n * INCH_PER_MM, N_DECIMAL_RATEVALUE_INCH);
   } else {
-    printFloat(n,N_DECIMAL_RATEVALUE_MM);
+    printFloat(n, N_DECIMAL_RATEVALUE_MM);
   }
 }
 
-// Debug tool to print free memory in bytes at the called point.
-// NOTE: Keep commented unless using. Part of this function always gets compiled in.
-// void printFreeMemory()
-// {
-//   extern int __heap_start, *__brkval;
-//   uint16_t free;  // Up to 64k values.
-//   free = (int) &free - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
-//   printInteger((int32_t)free);
-//   printString(" ");
-// }
+// 调试工具，用于在调用点打印剩余内存（以字节为单位）。
+// 注意：除非使用，否则保持注释状态。此函数的部分始终会编译。
+/*
+void printFreeMemory()
+{
+  extern int __heap_start, *__brkval;
+  uint16_t free;  // 最多 64k 值。
+  free = (int) &free - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
+  printInteger((int32_t)free);
+  printString(" ");
+}
+*/

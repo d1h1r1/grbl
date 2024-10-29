@@ -1,27 +1,23 @@
 /*
-  serial.c - Low level functions for sending and recieving bytes via the serial port
-  Part of Grbl
+  serial.c - 通过串口发送和接收字节的低级函数
+  Grbl 的一部分
 
-  Copyright (c) 2011-2016 Sungeun K. Jeon for Gnea Research LLC
-  Copyright (c) 2009-2011 Simen Svale Skogsrud
+  版权所有 (c) 2011-2016 Sungeun K. Jeon，Gnea Research LLC
+  版权所有 (c) 2009-2011 Simen Svale Skogsrud
 
-  Grbl is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+  Grbl 是自由软件：您可以根据自由软件基金会发布的 GNU 通用公共许可证进行再发行和/或修改，
+  该许可证的版本为 3，或（根据您的选择）任何后续版本。
 
-  Grbl is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  Grbl 的分发是出于它会有用的希望，
+  但没有任何担保；甚至没有适销性或适合特定目的的隐含担保。有关更多详细信息，请参见
+  GNU 通用公共许可证。
 
-  You should have received a copy of the GNU General Public License
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
+  您应该已收到一份 GNU 通用公共许可证的副本
+  与 Grbl 一起。如果没有，请访问 <http://www.gnu.org/licenses/>。
 */
 
 #ifndef serial_h
 #define serial_h
-
 
 #ifndef RX_BUFFER_SIZE
   #define RX_BUFFER_SIZE 255
@@ -32,27 +28,26 @@
 
 #define SERIAL_NO_DATA 0xff
 
-
 void serial_init();
 
-// Writes one byte to the TX serial buffer. Called by main program.
+// 将一个字节写入 TX 串口缓冲区。由主程序调用。
 void serial_write(uint8_t data);
 
-// Fetches the first byte in the serial read buffer. Called by main program.
+// 获取串口读取缓冲区中的第一个字节。由主程序调用。
 uint8_t serial_read();
 
-// Reset and empty data in read buffer. Used by e-stop and reset.
+// 重置并清空读取缓冲区中的数据。由急停和重置使用。
 void serial_reset_read_buffer();
 
-// Returns the number of bytes available in the RX serial buffer.
+// 返回 RX 串口缓冲区中可用的字节数。
 uint8_t serial_get_rx_buffer_available();
 
-// Returns the number of bytes used in the RX serial buffer.
-// NOTE: Deprecated. Not used unless classic status reports are enabled in config.h.
+// 返回 RX 串口缓冲区中已用的字节数。
+// 注意：已弃用。除非在 config.h 中启用经典状态报告，否则不使用。
 uint8_t serial_get_rx_buffer_count();
 
-// Returns the number of bytes used in the TX serial buffer.
-// NOTE: Not used except for debugging and ensuring no TX bottlenecks.
+// 返回 TX 串口缓冲区中已用的字节数。
+// 注意：除调试和确保没有 TX 瓶颈外不使用。
 uint8_t serial_get_tx_buffer_count();
 
 #endif

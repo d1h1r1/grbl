@@ -1,26 +1,23 @@
 /*
-  report.h - reporting and messaging methods
-  Part of Grbl
+  report.h - 报告和消息方法
+  Grbl 的一部分
 
-  Copyright (c) 2012-2016 Sungeun K. Jeon for Gnea Research LLC
+  版权所有 (c) 2012-2016 Sungeun K. Jeon，Gnea Research LLC
 
-  Grbl is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+  Grbl 是自由软件：您可以根据自由软件基金会发布的 GNU 通用公共许可证进行再发行和/或修改，
+  该许可证的版本为 3，或（根据您的选择）任何后续版本。
 
-  Grbl is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  Grbl 的分发是出于它会有用的希望，
+  但没有任何担保；甚至没有适销性或适合特定目的的隐含担保。有关更多详细信息，请参见
+  GNU 通用公共许可证。
 
-  You should have received a copy of the GNU General Public License
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
+  您应该已收到一份 GNU 通用公共许可证的副本
+  与 Grbl 一起。如果没有，请访问 <http://www.gnu.org/licenses/>。
 */
 #ifndef report_h
 #define report_h
 
-// Define Grbl status codes. Valid values (0-255)
+// 定义 Grbl 状态码。有效值（0-255）
 #define STATUS_OK 0
 #define STATUS_EXPECTED_COMMAND_LETTER 1
 #define STATUS_BAD_NUMBER_FORMAT 2
@@ -59,7 +56,7 @@
 #define STATUS_GCODE_G43_DYNAMIC_AXIS_ERROR 37
 #define STATUS_GCODE_MAX_VALUE_EXCEEDED 38
 
-// Define Grbl alarm codes. Valid values (1-255). 0 is reserved.
+// 定义 Grbl 报警代码。有效值（1-255）。0 为保留。
 #define ALARM_HARD_LIMIT_ERROR      EXEC_ALARM_HARD_LIMIT
 #define ALARM_SOFT_LIMIT_ERROR      EXEC_ALARM_SOFT_LIMIT
 #define ALARM_ABORT_CYCLE           EXEC_ALARM_ABORT_CYCLE
@@ -70,7 +67,7 @@
 #define ALARM_HOMING_FAIL_PULLOFF   EXEC_ALARM_HOMING_FAIL_PULLOFF
 #define ALARM_HOMING_FAIL_APPROACH  EXEC_ALARM_HOMING_FAIL_APPROACH
 
-// Define Grbl feedback message codes. Valid values (0-255).
+// 定义 Grbl 反馈消息代码。有效值（0-255）。
 #define MESSAGE_CRITICAL_EVENT 1
 #define MESSAGE_ALARM_LOCK 2
 #define MESSAGE_ALARM_UNLOCK 3
@@ -83,44 +80,44 @@
 #define MESSAGE_SPINDLE_RESTORE 10
 #define MESSAGE_SLEEP_MODE 11
 
-// Prints system status messages.
+// 打印系统状态消息。
 void report_status_message(uint8_t status_code);
 
-// Prints system alarm messages.
+// 打印系统报警消息。
 void report_alarm_message(uint8_t alarm_code);
 
-// Prints miscellaneous feedback messages.
+// 打印杂项反馈消息。
 void report_feedback_message(uint8_t message_code);
 
-// Prints welcome message
+// 打印欢迎消息
 void report_init_message();
 
-// Prints Grbl help and current global settings
+// 打印 Grbl 帮助和当前全局设置
 void report_grbl_help();
 
-// Prints Grbl global settings
+// 打印 Grbl 全局设置
 void report_grbl_settings();
 
-// Prints an echo of the pre-parsed line received right before execution.
+// 打印在执行前接收到的预解析行的回显。
 void report_echo_line_received(char *line);
 
-// Prints realtime status report
+// 打印实时状态报告
 void report_realtime_status();
 
-// Prints recorded probe position
+// 打印记录的探测位置
 void report_probe_parameters();
 
-// Prints Grbl NGC parameters (coordinate offsets, probe)
+// 打印 Grbl NGC 参数（坐标偏移、探测）
 void report_ngc_parameters();
 
-// Prints current g-code parser mode state
+// 打印当前的 G 代码解析器模式状态
 void report_gcode_modes();
 
-// Prints startup line when requested and executed.
+// 打印启动行（在请求和执行时）。
 void report_startup_line(uint8_t n, char *line);
 void report_execute_startup_message(char *line, uint8_t status_code);
 
-// Prints build info and user info
+// 打印构建信息和用户信息
 void report_build_info(char *line);
 
 #ifdef DEBUG

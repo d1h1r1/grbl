@@ -1,31 +1,29 @@
 /*
-  jog.h - Jogging methods
-  Part of Grbl
+  jog.h - 移动方法
+  Grbl 的一部分
 
-  Copyright (c) 2016 Sungeun K. Jeon for Gnea Research LLC
+  版权所有 (c) 2016 Sungeun K. Jeon，Gnea Research LLC
 
-  Grbl is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+  Grbl 是自由软件：你可以在自由软件基金会发布的 GNU 通用公共许可证条款下重新分发和/或修改
+  它，许可证版本为 3，或（根据你的选择）任何更高版本。
 
-  Grbl is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  Grbl 的发布是为了希望它能有用，
+  但不提供任何担保；甚至没有关于
+  适销性或适用于特定目的的隐含担保。有关详细信息，请参见
+  GNU 通用公共许可证。
 
-  You should have received a copy of the GNU General Public License
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
+  你应该已经收到一份 GNU 通用公共许可证的副本
+  与 Grbl 一起。如果没有，请参见 <http://www.gnu.org/licenses/>。
 */
 
 #include "grbl.h"
 
 
-// Sets up valid jog motion received from g-code parser, checks for soft-limits, and executes the jog.
+// 设置从 G-code 解析器接收到的有效移动命令，检查软限位，并执行移动。
 uint8_t jog_execute(plan_line_data_t *pl_data, parser_block_t *gc_block)
 {
-  // Initialize planner data struct for jogging motions.
-  // NOTE: Spindle and coolant are allowed to fully function with overrides during a jog.
+  // 初始化用于移动命令的规划数据结构。
+  // 注意：在移动期间允许主轴和冷却液完全功能化并进行覆盖。
   pl_data->feed_rate = gc_block->values.f;
   pl_data->condition |= PL_COND_FLAG_NO_FEED_OVERRIDE;
   pl_data->line_number = gc_block->values.n;
@@ -34,13 +32,13 @@ uint8_t jog_execute(plan_line_data_t *pl_data, parser_block_t *gc_block)
     if (system_check_travel_limits(gc_block->values.xyz)) { return(STATUS_TRAVEL_EXCEEDED); }
   }
 
-  // Valid jog command. Plan, set state, and execute.
+  // 有效的移动命令。计划、设置状态并执行。
   mc_line(gc_block->values.xyz,pl_data);
   if (sys.state == STATE_IDLE) {
-    if (plan_get_current_block() != NULL) { // Check if there is a block to execute.
+    if (plan_get_current_block() != NULL) { // 检查是否有待执行的命令块。
       sys.state = STATE_JOG;
       st_prep_buffer();
-      st_wake_up();  // NOTE: Manual start. No state machine required.
+      st_wake_up();  // 注意：手动启动。不需要状态机。
     }
   }
 

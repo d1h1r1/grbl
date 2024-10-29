@@ -1,21 +1,18 @@
 /*
-  system.h - Header for system level commands and real-time processes
-  Part of Grbl
+  system.h - 系统级命令和实时处理的头文件
+  Grbl的一部分
 
-  Copyright (c) 2014-2016 Sungeun K. Jeon for Gnea Research LLC
+  版权所有 (c) 2014-2016 Sungeun K. Jeon，Gnea Research LLC
 
-  Grbl is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+  Grbl是自由软件：您可以根据自由软件基金会发布的GNU通用公共许可证的条款重新分发和/或修改它，
+  无论是许可证的第3版，还是（根据您的选择）任何更高版本。
 
-  Grbl is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  Grbl的发行是希望它会有用，但不提供任何担保；
+  甚至没有适销性或特定用途适合性的暗示担保。有关更多详细信息，请参见
+  GNU通用公共许可证。
 
-  You should have received a copy of the GNU General Public License
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
+  您应该已经收到了一份GNU通用公共许可证的副本
+  与Grbl一起。如果没有，请访问<http://www.gnu.org/licenses/>。
 */
 
 #ifndef system_h
@@ -23,21 +20,21 @@
 
 #include "grbl.h"
 
-// Define system executor bit map. Used internally by realtime protocol as realtime command flags,
-// which notifies the main program to execute the specified realtime command asynchronously.
-// NOTE: The system executor uses an unsigned 8-bit volatile variable (8 flag limit.) The default
-// flags are always false, so the realtime protocol only needs to check for a non-zero value to
-// know when there is a realtime command to execute.
-#define EXEC_STATUS_REPORT  bit(0) // bitmask 00000001
-#define EXEC_CYCLE_START    bit(1) // bitmask 00000010
-#define EXEC_CYCLE_STOP     bit(2) // bitmask 00000100
-#define EXEC_FEED_HOLD      bit(3) // bitmask 00001000
-#define EXEC_RESET          bit(4) // bitmask 00010000
-#define EXEC_SAFETY_DOOR    bit(5) // bitmask 00100000
-#define EXEC_MOTION_CANCEL  bit(6) // bitmask 01000000
-#define EXEC_SLEEP          bit(7) // bitmask 10000000
+// 定义系统执行器位图。由实时协议在内部使用，作为实时命令标志，
+// 通知主程序异步执行指定的实时命令。
+// 注意：系统执行器使用一个无符号的8位易失性变量（8个标志限制）。默认
+// 标志始终为假，因此实时协议只需检查非零值即可
+// 知道何时有实时命令需要执行。
+#define EXEC_STATUS_REPORT  bit(0) // 位掩码 00000001
+#define EXEC_CYCLE_START    bit(1) // 位掩码 00000010
+#define EXEC_CYCLE_STOP     bit(2) // 位掩码 00000100
+#define EXEC_FEED_HOLD      bit(3) // 位掩码 00001000
+#define EXEC_RESET          bit(4) // 位掩码 00010000
+#define EXEC_SAFETY_DOOR    bit(5) // 位掩码 00100000
+#define EXEC_MOTION_CANCEL  bit(6) // 位掩码 01000000
+#define EXEC_SLEEP          bit(7) // 位掩码 10000000
 
-// Alarm executor codes. Valid values (1-255). Zero is reserved.
+// 报警执行器代码。有效值（1-255）。零被保留。
 #define EXEC_ALARM_HARD_LIMIT           1
 #define EXEC_ALARM_SOFT_LIMIT           2
 #define EXEC_ALARM_ABORT_CYCLE          3
@@ -48,8 +45,8 @@
 #define EXEC_ALARM_HOMING_FAIL_PULLOFF  8
 #define EXEC_ALARM_HOMING_FAIL_APPROACH 9
 
-// Override bit maps. Realtime bitflags to control feed, rapid, spindle, and coolant overrides.
-// Spindle/coolant and feed/rapids are separated into two controlling flag variables.
+// 覆盖位图。实时位标志控制进给、快速、主轴和冷却液覆盖。
+// 主轴/冷却液和进给/快速被分为两个控制标志变量。
 #define EXEC_FEED_OVR_RESET         bit(0)
 #define EXEC_FEED_OVR_COARSE_PLUS   bit(1)
 #define EXEC_FEED_OVR_COARSE_MINUS  bit(2)
@@ -58,7 +55,7 @@
 #define EXEC_RAPID_OVR_RESET        bit(5)
 #define EXEC_RAPID_OVR_MEDIUM       bit(6)
 #define EXEC_RAPID_OVR_LOW          bit(7)
-// #define EXEC_RAPID_OVR_EXTRA_LOW   bit(*) // *NOT SUPPORTED*
+// #define EXEC_RAPID_OVR_EXTRA_LOW   bit(*) // *不支持*
 
 #define EXEC_SPINDLE_OVR_RESET         bit(0)
 #define EXEC_SPINDLE_OVR_COARSE_PLUS   bit(1)
@@ -69,120 +66,118 @@
 #define EXEC_COOLANT_FLOOD_OVR_TOGGLE  bit(6)
 #define EXEC_COOLANT_MIST_OVR_TOGGLE   bit(7)
 
-// Define system state bit map. The state variable primarily tracks the individual functions
-// of Grbl to manage each without overlapping. It is also used as a messaging flag for
-// critical events.
-#define STATE_IDLE          0      // Must be zero. No flags.
-#define STATE_ALARM         bit(0) // In alarm state. Locks out all g-code processes. Allows settings access.
-#define STATE_CHECK_MODE    bit(1) // G-code check mode. Locks out planner and motion only.
-#define STATE_HOMING        bit(2) // Performing homing cycle
-#define STATE_CYCLE         bit(3) // Cycle is running or motions are being executed.
-#define STATE_HOLD          bit(4) // Active feed hold
-#define STATE_JOG           bit(5) // Jogging mode.
-#define STATE_SAFETY_DOOR   bit(6) // Safety door is ajar. Feed holds and de-energizes system.
-#define STATE_SLEEP         bit(7) // Sleep state.
+// 定义系统状态位图。状态变量主要跟踪Grbl的各个功能，
+// 以便管理每个功能而不发生重叠。它也用作
+// 关键事件的消息标志。
+#define STATE_IDLE          0      // 必须为零。没有标志。
+#define STATE_ALARM         bit(0) // 在报警状态。锁定所有g-code进程。允许访问设置。
+#define STATE_CHECK_MODE    bit(1) // G-code检查模式。只锁定计划和运动。
+#define STATE_HOMING        bit(2) // 执行回零周期
+#define STATE_CYCLE         bit(3) // 循环正在运行或正在执行运动。
+#define STATE_HOLD          bit(4) // 活动进给保持
+#define STATE_JOG           bit(5) // 手动操作模式。
+#define STATE_SAFETY_DOOR   bit(6) // 安全门开启。进给保持并断电系统。
+#define STATE_SLEEP         bit(7) // 睡眠状态。
 
-// Define system suspend flags. Used in various ways to manage suspend states and procedures.
-#define SUSPEND_DISABLE           0      // Must be zero.
-#define SUSPEND_HOLD_COMPLETE     bit(0) // Indicates initial feed hold is complete.
-#define SUSPEND_RESTART_RETRACT   bit(1) // Flag to indicate a retract from a restore parking motion.
-#define SUSPEND_RETRACT_COMPLETE  bit(2) // (Safety door only) Indicates retraction and de-energizing is complete.
-#define SUSPEND_INITIATE_RESTORE  bit(3) // (Safety door only) Flag to initiate resume procedures from a cycle start.
-#define SUSPEND_RESTORE_COMPLETE  bit(4) // (Safety door only) Indicates ready to resume normal operation.
-#define SUSPEND_SAFETY_DOOR_AJAR  bit(5) // Tracks safety door state for resuming.
-#define SUSPEND_MOTION_CANCEL     bit(6) // Indicates a canceled resume motion. Currently used by probing routine.
-#define SUSPEND_JOG_CANCEL        bit(7) // Indicates a jog cancel in process and to reset buffers when complete.
+// 定义系统挂起标志。用于以各种方式管理挂起状态和过程。
+#define SUSPEND_DISABLE           0      // 必须为零。
+#define SUSPEND_HOLD_COMPLETE     bit(0) // 指示初始进给保持已完成。
+#define SUSPEND_RESTART_RETRACT   bit(1) // 指示从恢复停车运动的撤回标志。
+#define SUSPEND_RETRACT_COMPLETE  bit(2) // （仅安全门）指示撤回和断电已完成。
+#define SUSPEND_INITIATE_RESTORE  bit(3) // （仅安全门）指示从循环启动恢复程序的标志。
+#define SUSPEND_RESTORE_COMPLETE  bit(4) // （仅安全门）指示准备恢复正常操作。
+#define SUSPEND_SAFETY_DOOR_AJAR  bit(5) // 跟踪安全门状态以便恢复。
+#define SUSPEND_MOTION_CANCEL     bit(6) // 指示取消恢复运动。当前由探测例程使用。
+#define SUSPEND_JOG_CANCEL        bit(7) // 指示正在处理的手动操作取消，并在完成时重置缓冲区。
 
-// Define step segment generator state flags.
-#define STEP_CONTROL_NORMAL_OP            0  // Must be zero.
+// 定义步进段生成器状态标志。
+#define STEP_CONTROL_NORMAL_OP            0  // 必须为零。
 #define STEP_CONTROL_END_MOTION           bit(0)
 #define STEP_CONTROL_EXECUTE_HOLD         bit(1)
 #define STEP_CONTROL_EXECUTE_SYS_MOTION   bit(2)
 #define STEP_CONTROL_UPDATE_SPINDLE_PWM   bit(3)
 
-// Define control pin index for Grbl internal use. Pin maps may change, but these values don't.
+// 定义Grbl内部使用的控制引脚索引。引脚映射可能会改变，但这些值不会。
 #define N_CONTROL_PIN 4
 #define CONTROL_PIN_INDEX_SAFETY_DOOR   bit(0)
 #define CONTROL_PIN_INDEX_RESET         bit(1)
 #define CONTROL_PIN_INDEX_FEED_HOLD     bit(2)
 #define CONTROL_PIN_INDEX_CYCLE_START   bit(3)
 
-// Define spindle stop override control states.
-#define SPINDLE_STOP_OVR_DISABLED       0  // Must be zero.
+// 定义主轴停止覆盖控制状态。
+#define SPINDLE_STOP_OVR_DISABLED       0  // 必须为零。
 #define SPINDLE_STOP_OVR_ENABLED        bit(0)
 #define SPINDLE_STOP_OVR_INITIATE       bit(1)
 #define SPINDLE_STOP_OVR_RESTORE        bit(2)
 #define SPINDLE_STOP_OVR_RESTORE_CYCLE  bit(3)
 
-
-// Define global system variables
+// 定义全局系统变量
 typedef struct {
-  uint8_t state;               // Tracks the current system state of Grbl.
-  uint8_t abort;               // System abort flag. Forces exit back to main loop for reset.             
-  uint8_t suspend;             // System suspend bitflag variable that manages holds, cancels, and safety door.
-  uint8_t soft_limit;          // Tracks soft limit errors for the state machine. (boolean)
-  uint8_t step_control;        // Governs the step segment generator depending on system state.
-  uint8_t probe_succeeded;     // Tracks if last probing cycle was successful.
-  uint8_t homing_axis_lock;    // Locks axes when limits engage. Used as an axis motion mask in the stepper ISR.
-  uint8_t f_override;          // Feed rate override value in percent
-  uint8_t r_override;          // Rapids override value in percent
-  uint8_t spindle_speed_ovr;   // Spindle speed value in percent
-  uint8_t spindle_stop_ovr;    // Tracks spindle stop override states
-  uint8_t report_ovr_counter;  // Tracks when to add override data to status reports.
-  uint8_t report_wco_counter;  // Tracks when to add work coordinate offset data to status reports.
+  uint8_t state;               // 跟踪Grbl的当前系统状态。
+  uint8_t abort;               // 系统中止标志。强制退出回主循环以进行重置。             
+  uint8_t suspend;             // 系统挂起位标志变量，管理保持、取消和安全门。
+  uint8_t soft_limit;          // 跟踪状态机的软限制错误。（布尔值）
+  uint8_t step_control;        // 根据系统状态管理步进段生成器。
+  uint8_t probe_succeeded;     // 跟踪最后一次探测周期是否成功。
+  uint8_t homing_axis_lock;    // 当限位开关触发时锁定轴。用作步进器ISR中的轴运动掩码。
+  uint8_t f_override;          // 进给率覆盖值（百分比）
+  uint8_t r_override;          // 快速覆盖值（百分比）
+  uint8_t spindle_speed_ovr;   // 主轴速度值（百分比）
+  uint8_t spindle_stop_ovr;    // 跟踪主轴停止覆盖状态
+  uint8_t report_ovr_counter;  // 跟踪何时将覆盖数据添加到状态报告。
+  uint8_t report_wco_counter;  // 跟踪何时将工作坐标偏移数据添加到状态报告。
   float spindle_speed;
 } system_t;
 extern system_t sys;
 
-// NOTE: These position variables may need to be declared as volatiles, if problems arise.
-int32_t sys_position[N_AXIS];      // Real-time machine (aka home) position vector in steps.
-int32_t sys_probe_position[N_AXIS]; // Last probe position in machine coordinates and steps.
+// 注意：如果出现问题，这些位置变量可能需要声明为易失性。
+int32_t sys_position[N_AXIS];      // 实时机器（即原点）位置向量，以步骤为单位。
+int32_t sys_probe_position[N_AXIS]; // 上一次探测位置，以机器坐标和步骤为单位。
 
-volatile uint8_t sys_probe_state;   // Probing state value.  Used to coordinate the probing cycle with stepper ISR.
-volatile uint8_t sys_rt_exec_state;   // Global realtime executor bitflag variable for state management. See EXEC bitmasks.
-volatile uint8_t sys_rt_exec_alarm;   // Global realtime executor bitflag variable for setting various alarms.
-volatile uint8_t sys_rt_exec_motion_override; // Global realtime executor bitflag variable for motion-based overrides.
-volatile uint8_t sys_rt_exec_accessory_override; // Global realtime executor bitflag variable for spindle/coolant overrides.
+volatile uint8_t sys_probe_state;   // 探测状态值。用于协调探测周期与步进器ISR。
+volatile uint8_t sys_rt_exec_state;   // 用于状态管理的全局实时执行器位标志变量。见EXEC位掩码。
+volatile uint8_t sys_rt_exec_alarm;   // 用于设置各种警报的全局实时执行器位标志变量。
+volatile uint8_t sys_rt_exec_motion_override; // 用于运动相关覆盖的全局实时执行器位标志变量。
+volatile uint8_t sys_rt_exec_accessory_override; // 用于主轴/冷却液覆盖的全局实时执行器位标志变量。
 
 #ifdef DEBUG
   #define EXEC_DEBUG_REPORT  bit(0)
   volatile uint8_t sys_rt_exec_debug;
 #endif
 
-// Initialize the serial protocol
+// 初始化串行协议
 void system_init();
 
-// Returns bitfield of control pin states, organized by CONTROL_PIN_INDEX. (1=triggered, 0=not triggered).
+// 返回控制引脚状态的位域，按CONTROL_PIN_INDEX组织。（1=触发，0=未触发）。
 uint8_t system_control_get_state();
 
-// Returns if safety door is open or closed, based on pin state.
+// 根据引脚状态返回安全门是开启还是关闭。
 uint8_t system_check_safety_door_ajar();
 
-// Executes an internal system command, defined as a string starting with a '$'
+// 执行内部系统命令，定义为以'$'开头的字符串
 uint8_t system_execute_line(char *line);
 
-// Execute the startup script lines stored in EEPROM upon initialization
+// 在初始化时执行存储在EEPROM中的启动脚本行
 void system_execute_startup(char *line);
-
 
 void system_flag_wco_change();
 
-// Returns machine position of axis 'idx'. Must be sent a 'step' array.
+// 返回轴'idx'的机器位置。必须发送一个'step'数组。
 float system_convert_axis_steps_to_mpos(int32_t *steps, uint8_t idx);
 
-// Updates a machine 'position' array based on the 'step' array sent.
+// 根据发送的'step'数组更新机器'position'数组。
 void system_convert_array_steps_to_mpos(float *position, int32_t *steps);
 
-// CoreXY calculation only. Returns x or y-axis "steps" based on CoreXY motor steps.
+// 仅限CoreXY计算。根据CoreXY电机步骤返回x或y轴的"steps"。
 #ifdef COREXY
   int32_t system_convert_corexy_to_x_axis_steps(int32_t *steps);
   int32_t system_convert_corexy_to_y_axis_steps(int32_t *steps);
 #endif
 
-// Checks and reports if target array exceeds machine travel limits.
+// 检查并报告目标数组是否超过机器行程限制。
 uint8_t system_check_travel_limits(float *target);
 
-// Special handlers for setting and clearing Grbl's real-time execution flags.
+// 用于设置和清除Grbl的实时执行标志的特殊处理程序。
 void system_set_exec_state_flag(uint8_t mask);
 void system_clear_exec_state_flag(uint8_t mask);
 void system_set_exec_alarm(uint8_t code);
@@ -191,6 +186,5 @@ void system_set_exec_motion_override_flag(uint8_t mask);
 void system_set_exec_accessory_override_flag(uint8_t mask);
 void system_clear_exec_motion_overrides();
 void system_clear_exec_accessory_overrides();
-
 
 #endif

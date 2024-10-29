@@ -1,42 +1,35 @@
 /*
-  planner.h - buffers movement commands and manages the acceleration profile plan
-  Part of Grbl
+  planner.h - 缓存运动命令并管理加速曲线计划
+  Grbl 的一部分
 
-  Copyright (c) 2011-2016 Sungeun K. Jeon for Gnea Research LLC
-  Copyright (c) 2009-2011 Simen Svale Skogsrud
+  版权所有 (c) 2011-2016 Sungeun K. Jeon，Gnea Research LLC
+  版权所有 (c) 2009-2011 Simen Svale Skogsrud
 
-  Grbl is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+  Grbl 是自由软件：你可以根据自由软件基金会发布的 GNU 通用公共许可证的条款重新分发和/或修改它，版本为许可证的第 3 版，或（根据你的选择）任何更高版本。
 
-  Grbl is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  Grbl 以希望它会有用的方式发布，但不提供任何担保；甚至不包括对适销性或特定用途适用性的隐含担保。有关更多详细信息，请参阅 GNU 通用公共许可证。
 
-  You should have received a copy of the GNU General Public License
-  along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
+  你应该已经收到一份 GNU 通用公共许可证的副本，随 Grbl 一起。如果没有，请参阅 <http://www.gnu.org/licenses/>。
 */
 
 #ifndef planner_h
 #define planner_h
 
 
-// The number of linear motions that can be in the plan at any give time
+// 在任何给定时间内，计划中可以包含的线性运动数量
 #ifndef BLOCK_BUFFER_SIZE
   #define BLOCK_BUFFER_SIZE 36
 #endif
 
-// Returned status message from planner.
+// 从规划器返回的状态消息。
 #define PLAN_OK true
 #define PLAN_EMPTY_BLOCK false
 
-// Define planner data condition flags. Used to denote running conditions of a block.
+// 定义规划器数据条件标志。用于表示块的运行条件。
 #define PL_COND_FLAG_RAPID_MOTION      bit(0)
-#define PL_COND_FLAG_SYSTEM_MOTION     bit(1) // Single motion. Circumvents planner state. Used by home/park.
-#define PL_COND_FLAG_NO_FEED_OVERRIDE  bit(2) // Motion does not honor feed override.
-#define PL_COND_FLAG_INVERSE_TIME      bit(3) // Interprets feed rate value as inverse time when set.
+#define PL_COND_FLAG_SYSTEM_MOTION     bit(1) // 单一运动。绕过规划器状态。由归位/停车使用。
+#define PL_COND_FLAG_NO_FEED_OVERRIDE  bit(2) // 运动不考虑进给覆盖。
+#define PL_COND_FLAG_INVERSE_TIME      bit(3) // 当设置时，将进给速率值解释为逆时间。
 #define PL_COND_FLAG_SPINDLE_CW        bit(4)
 #define PL_COND_FLAG_SPINDLE_CCW       bit(5)
 #define PL_COND_FLAG_COOLANT_FLOOD     bit(6)
@@ -44,96 +37,92 @@
 #define PL_COND_MOTION_MASK    (PL_COND_FLAG_RAPID_MOTION|PL_COND_FLAG_SYSTEM_MOTION|PL_COND_FLAG_NO_FEED_OVERRIDE)
 #define PL_COND_ACCESSORY_MASK (PL_COND_FLAG_SPINDLE_CW|PL_COND_FLAG_SPINDLE_CCW|PL_COND_FLAG_COOLANT_FLOOD|PL_COND_FLAG_COOLANT_MIST)
 
-
-// This struct stores a linear movement of a g-code block motion with its critical "nominal" values
-// are as specified in the source g-code.
+// 此结构存储 g-code 块运动的线性运动及其关键的“标称”值
+// 按照源 g-code 中的规定。
 typedef struct {
-  // Fields used by the bresenham algorithm for tracing the line
-  // NOTE: Used by stepper algorithm to execute the block correctly. Do not alter these values.
-  uint32_t steps[N_AXIS];    // Step count along each axis
-  uint32_t step_event_count; // The maximum step axis count and number of steps required to complete this block.
-  uint8_t direction_bits;    // The direction bit set for this block (refers to *_DIRECTION_BIT in config.h)
+  // Bresenham 算法用于跟踪线的字段
+  // 注意：由步进器算法正确执行块。请勿更改这些值。
+  uint32_t steps[N_AXIS];    // 每个轴的步数
+  uint32_t step_event_count; // 完成此块所需的最大步轴计数和步数。
+  uint8_t direction_bits;    // 此块的方向位设置（引用 config.h 中的 *_DIRECTION_BIT）
 
-  // Block condition data to ensure correct execution depending on states and overrides.
-  uint8_t condition;      // Block bitflag variable defining block run conditions. Copied from pl_line_data.
-  int32_t line_number;  // Block line number for real-time reporting. Copied from pl_line_data.
+  // 块条件数据以确保根据状态和覆盖进行正确执行。
+  uint8_t condition;      // 定义块运行条件的块位标志变量。复制自 pl_line_data。
+  int32_t line_number;  // 实时报告的块行号。复制自 pl_line_data。
 
-  // Fields used by the motion planner to manage acceleration. Some of these values may be updated
-  // by the stepper module during execution of special motion cases for replanning purposes.
-  float entry_speed_sqr;     // The current planned entry speed at block junction in (mm/min)^2
-  float max_entry_speed_sqr; // Maximum allowable entry speed based on the minimum of junction limit and
-                             //   neighboring nominal speeds with overrides in (mm/min)^2
-  float acceleration;        // Axis-limit adjusted line acceleration in (mm/min^2). Does not change.
-  float millimeters;         // The remaining distance for this block to be executed in (mm).
-                             // NOTE: This value may be altered by stepper algorithm during execution.
+  // 运动规划器用于管理加速的字段。某些值可能在执行特殊运动案例时由步进模块更新
+  // 以进行重新规划。
+  float entry_speed_sqr;     // 块连接处当前计划的入速（mm/min）^2
+  float max_entry_speed_sqr; // 基于连接限制和相邻标称速度的最小值的最大允许入速
+                             // （mm/min）^2
+  float acceleration;        // 轴限制调整后的线加速度（mm/min^2）。不改变。
+  float millimeters;         // 此块在执行中的剩余距离（mm）。
+                             // 注意：此值可能在执行过程中由步进算法更改。
 
-  // Stored rate limiting data used by planner when changes occur.
-  float max_junction_speed_sqr; // Junction entry speed limit based on direction vectors in (mm/min)^2
-  float rapid_rate;             // Axis-limit adjusted maximum rate for this block direction in (mm/min)
-  float programmed_rate;        // Programmed rate of this block (mm/min).
+  // 规划器在发生变化时使用的速率限制数据。
+  float max_junction_speed_sqr; // 基于方向向量的连接入速限制（mm/min）^2
+  float rapid_rate;             // 此块方向的轴限制调整后的最大速率（mm/min）
+  float programmed_rate;        // 此块的编程速率（mm/min）。
 
-  // Stored spindle speed data used by spindle overrides and resuming methods.
-  float spindle_speed;    // Block spindle speed. Copied from pl_line_data.
+  // 用于主轴覆盖和恢复方法的存储主轴速度数据。
+  float spindle_speed;    // 块主轴速度。复制自 pl_line_data。
 } plan_block_t;
 
-
-// Planner data prototype. Must be used when passing new motions to the planner.
+// 规划器数据原型。传递新运动给规划器时必须使用。
 typedef struct {
-  float feed_rate;          // Desired feed rate for line motion. Value is ignored, if rapid motion.
-  float spindle_speed;      // Desired spindle speed through line motion.
-  int32_t line_number;    // Desired line number to report when executing.
-  uint8_t condition;        // Bitflag variable to indicate planner conditions. See defines above.
+  float feed_rate;          // 线性运动所需的进给速率。如果是快速运动，则忽略该值。
+  float spindle_speed;      // 线性运动的所需主轴速度。
+  int32_t line_number;    // 执行时要报告的所需行号。
+  uint8_t condition;        // 指示规划器条件的位标志变量。请参阅上面的定义。
 } plan_line_data_t;
 
+// 初始化并重置运动计划子系统
+void plan_reset(); // 重置所有
+void plan_reset_buffer(); // 仅重置缓冲区。
 
-// Initialize and reset the motion plan subsystem
-void plan_reset(); // Reset all
-void plan_reset_buffer(); // Reset buffer only.
-
-// Add a new linear movement to the buffer. target[N_AXIS] is the signed, absolute target position
-// in millimeters. Feed rate specifies the speed of the motion. If feed rate is inverted, the feed
-// rate is taken to mean "frequency" and would complete the operation in 1/feed_rate minutes.
+// 将新的线性运动添加到缓冲区。target[N_AXIS] 是以毫米为单位的带符号绝对目标位置。
+// 进给速率指定运动的速度。如果进给速率被反转，则进给速率被视为“频率”，
+// 将在 1/feed_rate 分钟内完成操作。
 uint8_t plan_buffer_line(float *target, plan_line_data_t *pl_data);
 
-// Called when the current block is no longer needed. Discards the block and makes the memory
-// availible for new blocks.
+// 当当前块不再需要时调用。丢弃该块并释放内存
+// 以便用于新块。
 void plan_discard_current_block();
 
-// Gets the planner block for the special system motion cases. (Parking/Homing)
+// 获取特殊系统运动案例的规划器块。（停车/归位）
 plan_block_t *plan_get_system_motion_block();
 
-// Gets the current block. Returns NULL if buffer empty
+// 获取当前块。如果缓冲区为空则返回 NULL
 plan_block_t *plan_get_current_block();
 
-// Called periodically by step segment buffer. Mostly used internally by planner.
+// 由步进段缓冲区定期调用。主要由规划器内部使用。
 uint8_t plan_next_block_index(uint8_t block_index);
 
-// Called by step segment buffer when computing executing block velocity profile.
+// 在计算执行块速度曲线时由步进段缓冲区调用。
 float plan_get_exec_block_exit_speed_sqr();
 
-// Called by main program during planner calculations and step segment buffer during initialization.
+// 在主程序进行规划计算和步进段缓冲区初始化期间调用。
 float plan_compute_profile_nominal_speed(plan_block_t *block);
 
-// Re-calculates buffered motions profile parameters upon a motion-based override change.
+// 在基于运动的覆盖变化后重新计算缓冲运动的配置参数。
 void plan_update_velocity_profile_parameters();
 
-// Reset the planner position vector (in steps)
+// 重置规划器位置向量（以步数计）
 void plan_sync_position();
 
-// Reinitialize plan with a partially completed block
+// 用部分完成的块重新初始化计划
 void plan_cycle_reinitialize();
 
-// Returns the number of available blocks are in the planner buffer.
+// 返回规划器缓冲区中可用块的数量。
 uint8_t plan_get_block_buffer_available();
 
-// Returns the number of active blocks are in the planner buffer.
-// NOTE: Deprecated. Not used unless classic status reports are enabled in config.h
+// 返回规划器缓冲区中活动块的数量。
+// 注意：已弃用。除非在 config.h 中启用经典状态报告，否则不使用。
 uint8_t plan_get_block_buffer_count();
 
-// Returns the status of the block ring buffer. True, if buffer is full.
+// 返回块环缓冲区的状态。如果缓冲区已满，则返回 true。
 uint8_t plan_check_full_buffer();
 
 void plan_get_planner_mpos(float *target);
-
 
 #endif
