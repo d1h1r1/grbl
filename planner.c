@@ -143,7 +143,7 @@ static void planner_recalculate()
     next = &block_buffer[block_index];
 
     // 在正向计算中检测到的任何加速自动将最优规划指针向前移动，因为之前的所有都是最优的。
-    换句话说，逻辑上从缓冲区尾到规划指针之间的任何内容都无法改善规划。
+    // 换句话说，逻辑上从缓冲区尾到规划指针之间的任何内容都无法改善规划。
     if (current->entry_speed_sqr < next->entry_speed_sqr) {
       entry_speed_sqr = current->entry_speed_sqr + 2 * current->acceleration * current->millimeters;
       // 如果为真，当前块为全加速，且我们可以将规划指针向前移动。
@@ -154,8 +154,8 @@ static void planner_recalculate()
     }
 
     // 任何设置为其最大入口速度的块也会在缓冲区的这一点上创建最优规划。
-    当规划被缓冲区的开头和最大入口速度或两个最大入口速度括起来时，之间的每个块都逻辑上无法进一步改善。
-    因此，我们不再需要重新计算它们。
+    // 当规划被缓冲区的开头和最大入口速度或两个最大入口速度括起来时，之间的每个块都逻辑上无法进一步改善。
+    // 因此，我们不再需要重新计算它们。
     if (next->entry_speed_sqr == next->max_entry_speed_sqr) { block_buffer_planned = block_index; }
     block_index = plan_next_block_index(block_index);
   }
