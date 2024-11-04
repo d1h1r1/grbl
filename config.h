@@ -30,7 +30,7 @@
 #define CPU_MAP_2560_INITIAL
 
 // 串口波特率
-// #define BAUD_RATE 230400
+// #define BAUD_RATE 256000
 #define BAUD_RATE 115200
 
 // 定义实时命令特殊字符。这些字符是直接从串行读取数据流中“挑选”出来的，且不会传递给grbl行执行解析器。

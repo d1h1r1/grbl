@@ -106,10 +106,10 @@
   #define CONTROL_MASK      ((1<<CONTROL_RESET_BIT)|(1<<CONTROL_FEED_HOLD_BIT)|(1<<CONTROL_CYCLE_START_BIT)|(1<<CONTROL_SAFETY_DOOR_BIT))
 
 // 定义探针开关输入引脚。
-  #define PROBE_DDR       DDRK
-  #define PROBE_PIN       PINK
-  #define PROBE_PORT      PORTK
-  #define PROBE_BIT       7  // MEGA2560 Analog Pin 15
+  #define PROBE_DDR       DDRJ
+  #define PROBE_PIN       PINJ
+  #define PROBE_PORT      PORTJ
+  #define PROBE_BIT       0  // MEGA2560 Analog Pin 15
   #define PROBE_MASK      (1<<PROBE_BIT)
 
   // 高级配置（下面的变量一般不需要修改）
