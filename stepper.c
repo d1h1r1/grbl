@@ -797,213 +797,226 @@ void st_prep_buffer()
       每个坡道的行驶距离可以从零到块的长度。速度曲线可以在
       规划块的末尾（典型）或在强制减速的中间（例如，从进给保持）结束。
     */
-    float dt_max = DT_SEGMENT; // 最大段时间
-float dt = 0.0; // 初始化段时间
-float time_var = dt_max; // 时间工作变量
-float mm_var; // mm-距离工作变量
-float speed_var; // 速度工作变量
-float mm_remaining = pl_block->millimeters; // 从块的末尾到新段的距离。
-float minimum_mm = mm_remaining - prep.req_mm_increment; // 确保至少有一步。
-if (minimum_mm < 0.0) { minimum_mm = 0.0; }
+    float dt_max = DT_SEGMENT; // Maximum segment time
+    float dt = 0.0; // Initialize segment time
+    float time_var = dt_max; // Time worker variable
+    float mm_var; // mm-Distance worker variable
+    float speed_var; // Speed worker variable
+    float mm_remaining = pl_block->millimeters; // New segment distance from end of block.
+    float minimum_mm = mm_remaining-prep.req_mm_increment; // Guarantee at least one step.
+    if (minimum_mm < 0.0) { minimum_mm = 0.0; }
 
-do {
-  switch (prep.ramp_type) {
-    case RAMP_DECEL_OVERRIDE:
-      speed_var = pl_block->acceleration * time_var;
-      mm_var = time_var * (prep.current_speed - 0.5 * speed_var);
-      mm_remaining -= mm_var;
-      if ((mm_remaining < prep.accelerate_until) || (mm_var <= 0)) {
-        // 仅适用于减速覆盖的巡航或巡航-减速类型。
-        mm_remaining = prep.accelerate_until; // 注意：在块末尾为 0.0
-        time_var = 2.0 * (pl_block->millimeters - mm_remaining) / (prep.current_speed + prep.maximum_speed);
-        prep.ramp_type = RAMP_CRUISE;
-        prep.current_speed = prep.maximum_speed;
-      } else { // 中间减速覆盖坡道。
-        prep.current_speed -= speed_var;
+    do {
+      switch (prep.ramp_type) {
+        case RAMP_DECEL_OVERRIDE:
+          speed_var = pl_block->acceleration*time_var;
+          mm_var = time_var*(prep.current_speed - 0.5*speed_var);
+          mm_remaining -= mm_var;
+          if ((mm_remaining < prep.accelerate_until) || (mm_var <= 0)) {
+            // Cruise or cruise-deceleration types only for deceleration override.
+            mm_remaining = prep.accelerate_until; // NOTE: 0.0 at EOB
+            time_var = 2.0*(pl_block->millimeters-mm_remaining)/(prep.current_speed+prep.maximum_speed);
+            prep.ramp_type = RAMP_CRUISE;
+            prep.current_speed = prep.maximum_speed;
+          } else { // Mid-deceleration override ramp.
+            prep.current_speed -= speed_var;
+          }
+          break;
+        case RAMP_ACCEL:
+          // NOTE: Acceleration ramp only computes during first do-while loop.
+          speed_var = pl_block->acceleration*time_var;
+          mm_remaining -= time_var*(prep.current_speed + 0.5*speed_var);
+          if (mm_remaining < prep.accelerate_until) { // End of acceleration ramp.
+            // Acceleration-cruise, acceleration-deceleration ramp junction, or end of block.
+            mm_remaining = prep.accelerate_until; // NOTE: 0.0 at EOB
+            time_var = 2.0*(pl_block->millimeters-mm_remaining)/(prep.current_speed+prep.maximum_speed);
+            if (mm_remaining == prep.decelerate_after) { prep.ramp_type = RAMP_DECEL; }
+            else { prep.ramp_type = RAMP_CRUISE; }
+            prep.current_speed = prep.maximum_speed;
+          } else { // Acceleration only.
+            prep.current_speed += speed_var;
+          }
+          break;
+        case RAMP_CRUISE:
+          // NOTE: mm_var used to retain the last mm_remaining for incomplete segment time_var calculations.
+          // NOTE: If maximum_speed*time_var value is too low, round-off can cause mm_var to not change. To
+          //   prevent this, simply enforce a minimum speed threshold in the planner.
+          mm_var = mm_remaining - prep.maximum_speed*time_var;
+          if (mm_var < prep.decelerate_after) { // End of cruise.
+            // Cruise-deceleration junction or end of block.
+            time_var = (mm_remaining - prep.decelerate_after)/prep.maximum_speed;
+            mm_remaining = prep.decelerate_after; // NOTE: 0.0 at EOB
+            prep.ramp_type = RAMP_DECEL;
+          } else { // Cruising only.
+            mm_remaining = mm_var;
+          }
+          break;
+        default: // case RAMP_DECEL:
+          // NOTE: mm_var used as a misc worker variable to prevent errors when near zero speed.
+          speed_var = pl_block->acceleration*time_var; // Used as delta speed (mm/min)
+          if (prep.current_speed > speed_var) { // Check if at or below zero speed.
+            // Compute distance from end of segment to end of block.
+            mm_var = mm_remaining - time_var*(prep.current_speed - 0.5*speed_var); // (mm)
+            if (mm_var > prep.mm_complete) { // Typical case. In deceleration ramp.
+              mm_remaining = mm_var;
+              prep.current_speed -= speed_var;
+              break; // Segment complete. Exit switch-case statement. Continue do-while loop.
+            }
+          }
+          // Otherwise, at end of block or end of forced-deceleration.
+          time_var = 2.0*(mm_remaining-prep.mm_complete)/(prep.current_speed+prep.exit_speed);
+          mm_remaining = prep.mm_complete;
+          prep.current_speed = prep.exit_speed;
       }
-      break;
-    case RAMP_ACCEL:
-      // 注意：加速坡道仅在第一次 do-while 循环中计算。
-      speed_var = pl_block->acceleration * time_var;
-      mm_remaining -= time_var * (prep.current_speed + 0.5 * speed_var);
-      if (mm_remaining < prep.accelerate_until) { // 加速坡道结束。
-        // 加速-巡航、加速-减速坡道交界处或块的末尾。
-        mm_remaining = prep.accelerate_until; // 注意：在块末尾为 0.0
-        time_var = 2.0 * (pl_block->millimeters - mm_remaining) / (prep.current_speed + prep.maximum_speed);
-        if (mm_remaining == prep.decelerate_after) { prep.ramp_type = RAMP_DECEL; }
-        else { prep.ramp_type = RAMP_CRUISE; }
-        prep.current_speed = prep.maximum_speed;
-      } else { // 仅加速。
-        prep.current_speed += speed_var;
-      }
-      break;
-    case RAMP_CRUISE:
-      // 注意：mm_var 用于保留未完成段的最后 mm_remaining，以便进行时间_var 计算。
-      // 注意：如果 maximum_speed * time_var 值过低，舍入可能导致 mm_var 不变。为防止这种情况，
-      //   在规划器中强制设置最小速度阈值。
-      mm_var = mm_remaining - prep.maximum_speed * time_var;
-      if (mm_var < prep.decelerate_after) { // 巡航结束。
-        // 巡航-减速交界处或块的末尾。
-        time_var = (mm_remaining - prep.decelerate_after) / prep.maximum_speed;
-        mm_remaining = prep.decelerate_after; // 注意：在块末尾为 0.0
-        prep.ramp_type = RAMP_DECEL;
-      } else { // 仅巡航。
-        mm_remaining = mm_var;
-      }
-      break;
-    default: // case RAMP_DECEL:
-      // 注意：mm_var 作为杂项工作变量，以防在接近零速度时出错。
-      speed_var = pl_block->acceleration * time_var; // 作为增量速度（mm/min）
-      if (prep.current_speed > speed_var) { // 检查是否处于零速度或以下。
-        // 计算从段末尾到块末尾的距离。
-        mm_var = mm_remaining - time_var * (prep.current_speed - 0.5 * speed_var); // （mm）
-        if (mm_var > prep.mm_complete) { // 典型情况。在减速坡道中。
-          mm_remaining = mm_var;
-          prep.current_speed -= speed_var;
-          break; // 段完成。退出 switch-case 语句。继续 do-while 循环。
+      dt += time_var; // Add computed ramp time to total segment time.
+      if (dt < dt_max) { time_var = dt_max - dt; } // **Incomplete** At ramp junction.
+      else {
+        if (mm_remaining > minimum_mm) { // Check for very slow segments with zero steps.
+          // Increase segment time to ensure at least one step in segment. Override and loop
+          // through distance calculations until minimum_mm or mm_complete.
+          dt_max += DT_SEGMENT;
+          time_var = dt_max - dt;
+        } else {
+          break; // **Complete** Exit loop. Segment execution time maxed.
         }
       }
-      // 否则，处于块末尾或强制减速的末尾。
-      time_var = 2.0 * (mm_remaining - prep.mm_complete) / (prep.current_speed + prep.exit_speed);
-      mm_remaining = prep.mm_complete;
-      prep.current_speed = prep.exit_speed;
-  }
-  dt += time_var; // 将计算出的坡道时间添加到总段时间中。
-  if (dt < dt_max) { time_var = dt_max - dt; } // **未完成** 在坡道交界处。
-  else {
-    if (mm_remaining > minimum_mm) { // 检查是否有非常慢的段落且步骤为零。
-      // 增加段时间以确保在段中至少有一步。覆盖并循环
-      // 直到达到 minimum_mm 或 mm_complete 的距离计算。
-      dt_max += DT_SEGMENT;
-      time_var = dt_max - dt;
-    } else {
-      break; // **完成** 退出循环。段执行时间已达到最大值。
+    } while (mm_remaining > prep.mm_complete); // **Complete** Exit loop. Profile complete.
+
+
+    /* -----------------------------------------------------------------------------------
+      Compute spindle speed PWM output for step segment
+    */
+    
+    if (st_prep_block->is_pwm_rate_adjusted || (sys.step_control & STEP_CONTROL_UPDATE_SPINDLE_PWM)) {
+      if (pl_block->condition & (PL_COND_FLAG_SPINDLE_CW | PL_COND_FLAG_SPINDLE_CCW)) {
+        float rpm = pl_block->spindle_speed;
+        // NOTE: Feed and rapid overrides are independent of PWM value and do not alter laser power/rate.        
+        if (st_prep_block->is_pwm_rate_adjusted) { rpm *= (prep.current_speed * prep.inv_rate); }
+        // If current_speed is zero, then may need to be rpm_min*(100/MAX_SPINDLE_SPEED_OVERRIDE)
+        // but this would be instantaneous only and during a motion. May not matter at all.
+        prep.current_spindle_pwm = spindle_compute_pwm_value(rpm);
+      } else { 
+        sys.spindle_speed = 0.0;
+        prep.current_spindle_pwm = SPINDLE_PWM_OFF_VALUE;
+      }
+      bit_false(sys.step_control,STEP_CONTROL_UPDATE_SPINDLE_PWM);
     }
-  }
-} while (mm_remaining > prep.mm_complete); // **完成** 退出循环。轮廓完成。
+    prep_segment->spindle_pwm = prep.current_spindle_pwm; // Reload segment PWM value
 
-/* -----------------------------------------------------------------------------------
-  计算步进段的主轴速度 PWM 输出
-*/
+    
+    /* -----------------------------------------------------------------------------------
+       Compute segment step rate, steps to execute, and apply necessary rate corrections.
+       NOTE: Steps are computed by direct scalar conversion of the millimeter distance
+       remaining in the block, rather than incrementally tallying the steps executed per
+       segment. This helps in removing floating point round-off issues of several additions.
+       However, since floats have only 7.2 significant digits, long moves with extremely
+       high step counts can exceed the precision of floats, which can lead to lost steps.
+       Fortunately, this scenario is highly unlikely and unrealistic in CNC machines
+       supported by Grbl (i.e. exceeding 10 meters axis travel at 200 step/mm).
+    */
+    float step_dist_remaining = prep.step_per_mm*mm_remaining; // Convert mm_remaining to steps
+    float n_steps_remaining = ceil(step_dist_remaining); // Round-up current steps remaining
+    float last_n_steps_remaining = ceil(prep.steps_remaining); // Round-up last steps remaining
+    prep_segment->n_step = last_n_steps_remaining-n_steps_remaining; // Compute number of steps to execute.
 
-if (st_prep_block->is_pwm_rate_adjusted || (sys.step_control & STEP_CONTROL_UPDATE_SPINDLE_PWM)) {
-  if (pl_block->condition & (PL_COND_FLAG_SPINDLE_CW | PL_COND_FLAG_SPINDLE_CCW)) {
-    float rpm = pl_block->spindle_speed;
-    // 注意：进给和快速覆盖与 PWM 值无关，并且不会改变激光功率/速率。        
-    if (st_prep_block->is_pwm_rate_adjusted) { rpm *= (prep.current_speed * prep.inv_rate); }
-    // 如果 current_speed 为零，则可能需要为 rpm_min * (100 / MAX_SPINDLE_SPEED_OVERRIDE)
-    // 但这仅在运动期间是瞬时的。可能根本无关紧要。
-    prep.current_spindle_pwm = spindle_compute_pwm_value(rpm);
-  } else { 
-    sys.spindle_speed = 0.0;
-    prep.current_spindle_pwm = SPINDLE_PWM_OFF_VALUE;
-  }
-  bit_false(sys.step_control, STEP_CONTROL_UPDATE_SPINDLE_PWM);
-}
-prep_segment->spindle_pwm = prep.current_spindle_pwm; // 重新加载段 PWM 值
+    // Bail if we are at the end of a feed hold and don't have a step to execute.
+    if (prep_segment->n_step == 0) {
+      if (sys.step_control & STEP_CONTROL_EXECUTE_HOLD) {
+        // Less than one step to decelerate to zero speed, but already very close. AMASS
+        // requires full steps to execute. So, just bail.
+        bit_true(sys.step_control,STEP_CONTROL_END_MOTION);
+        #ifdef PARKING_ENABLE
+          if (!(prep.recalculate_flag & PREP_FLAG_PARKING)) { prep.recalculate_flag |= PREP_FLAG_HOLD_PARTIAL_BLOCK; }
+        #endif
+        return; // Segment not generated, but current step data still retained.
+      }
+    }
 
-/* -----------------------------------------------------------------------------------
-   计算段步率、待执行步骤，并应用必要的速率校正。
-   注意：步骤是通过将剩余的毫米距离直接转换为标量计算的，而不是逐步统计每段执行的步骤。
-   这有助于消除几个加法的浮点舍入问题。
-   但是，由于浮点数只有 7.2 位有效数字，因此长时间以极高步数移动可能会超出浮点数的精度，
-   这可能会导致步骤丢失。
-   幸运的是，这种情况在 Grbl 支持的 CNC 机器中非常不太可能且不现实（即，以 200 步/mm 超过 10 米的轴移动）。
-*/
-float step_dist_remaining = prep.step_per_mm * mm_remaining; // 将 mm_remaining 转换为步骤
-float n_steps_remaining = ceil(step_dist_remaining); // 向上取整当前剩余步骤
-float last_n_steps_remaining = ceil(prep.steps_remaining); // 向上取整最后剩余步骤
-prep_segment->n_step = last_n_steps_remaining - n_steps_remaining; // 计算待执行的步骤数。
+    // Compute segment step rate. Since steps are integers and mm distances traveled are not,
+    // the end of every segment can have a partial step of varying magnitudes that are not
+    // executed, because the stepper ISR requires whole steps due to the AMASS algorithm. To
+    // compensate, we track the time to execute the previous segment's partial step and simply
+    // apply it with the partial step distance to the current segment, so that it minutely
+    // adjusts the whole segment rate to keep step output exact. These rate adjustments are
+    // typically very small and do not adversely effect performance, but ensures that Grbl
+    // outputs the exact acceleration and velocity profiles as computed by the planner.
+    dt += prep.dt_remainder; // Apply previous segment partial step execute time
+    float inv_rate = dt/(last_n_steps_remaining - step_dist_remaining); // Compute adjusted step rate inverse
 
-// 如果我们处于进给保持的末尾而没有步骤可执行，则退出。
-if (prep_segment->n_step == 0) {
-  if (sys.step_control & STEP_CONTROL_EXECUTE_HOLD) {
-    // 减速到零速度不到一步，但已经非常接近。AMASS
-    // 需要执行完整步骤。因此，只需退出。
-    bit_true(sys.step_control, STEP_CONTROL_END_MOTION);
-    #ifdef PARKING_ENABLE
-      if (!(prep.recalculate_flag & PREP_FLAG_PARKING)) { prep.recalculate_flag |= PREP_FLAG_HOLD_PARTIAL_BLOCK; }
+    // Compute CPU cycles per step for the prepped segment.
+    uint32_t cycles = ceil( (TICKS_PER_MICROSECOND*1000000*60)*inv_rate ); // (cycles/step)
+
+    #ifdef ADAPTIVE_MULTI_AXIS_STEP_SMOOTHING
+      // Compute step timing and multi-axis smoothing level.
+      // NOTE: AMASS overdrives the timer with each level, so only one prescalar is required.
+      if (cycles < AMASS_LEVEL1) { prep_segment->amass_level = 0; }
+      else {
+        if (cycles < AMASS_LEVEL2) { prep_segment->amass_level = 1; }
+        else if (cycles < AMASS_LEVEL3) { prep_segment->amass_level = 2; }
+        else { prep_segment->amass_level = 3; }
+        cycles >>= prep_segment->amass_level;
+        prep_segment->n_step <<= prep_segment->amass_level;
+      }
+      if (cycles < (1UL << 16)) { prep_segment->cycles_per_tick = cycles; } // < 65536 (4.1ms @ 16MHz)
+      else { prep_segment->cycles_per_tick = 0xffff; } // Just set the slowest speed possible.
+    #else
+      // Compute step timing and timer prescalar for normal step generation.
+      if (cycles < (1UL << 16)) { // < 65536  (4.1ms @ 16MHz)
+        prep_segment->prescaler = 1; // prescaler: 0
+        prep_segment->cycles_per_tick = cycles;
+      } else if (cycles < (1UL << 19)) { // < 524288 (32.8ms@16MHz)
+        prep_segment->prescaler = 2; // prescaler: 8
+        prep_segment->cycles_per_tick = cycles >> 3;
+      } else {
+        prep_segment->prescaler = 3; // prescaler: 64
+        if (cycles < (1UL << 22)) { // < 4194304 (262ms@16MHz)
+          prep_segment->cycles_per_tick =  cycles >> 6;
+        } else { // Just set the slowest speed possible. (Around 4 step/sec.)
+          prep_segment->cycles_per_tick = 0xffff;
+        }
+      }
     #endif
-    return; // 段未生成，但当前步骤数据仍保留。
-  }
-}
 
-// 计算段步率。由于步骤是整数而毫米距离不是，
-// 每个段的末尾可能有不同数量的部分步骤未执行，因为步进 ISR 需要整体步骤以满足 AMASS 算法。为了补偿，我们跟踪执行前一个段的部分步骤所需的时间，并将其简单地应用于当前段的部分步骤，从而微调整体段速率以保持步骤输出准确。这些速率调整通常非常小，并不会对性能产生不利影响，但确保 Grbl 输出由规划器计算的确切加速度和速度曲线。
-dt += prep.dt_remainder; // 应用前一个段部分步骤的执行时间
-float inv_rate = dt / (last_n_steps_remaining - step_dist_remaining); // 计算调整后的步骤速率反向
+    // Segment complete! Increment segment buffer indices, so stepper ISR can immediately execute it.
+    segment_buffer_head = segment_next_head;
+    if ( ++segment_next_head == SEGMENT_BUFFER_SIZE ) { segment_next_head = 0; }
 
-// 计算预备段的每步 CPU 周期。
-uint32_t cycles = ceil((TICKS_PER_MICROSECOND * 1000000 * 60) * inv_rate); // （周期/步）
+    // Update the appropriate planner and segment data.
+    pl_block->millimeters = mm_remaining;
+    prep.steps_remaining = n_steps_remaining;
+    prep.dt_remainder = (n_steps_remaining - step_dist_remaining)*inv_rate;
 
-#ifdef ADAPTIVE_MULTI_AXIS_STEP_SMOOTHING
-  // 计算步进时序和多轴平滑级别。
-  // 注意：AMASS 通过每个级别超驱动定时器，因此只需要一个预分频器。
-  if (cycles < AMASS_LEVEL1) { prep_segment->amass_level = 0; }
-  else {
-    if (cycles < AMASS_LEVEL2) { prep_segment->amass_level = 1; }
-    else if (cycles < AMASS_LEVEL3) { prep_segment->amass_level = 2; }
-    else { prep_segment->amass_level = 3; }
-    cycles >>= prep_segment->amass_level;
-    prep_segment->n_step <<= prep_segment->amass_level;
-  }
-  if (cycles < (1UL << 16)) { prep_segment->cycles_per_tick = cycles; } // < 65536 (16MHz 下 4.1ms)
-  else { prep_segment->cycles_per_tick = 0xffff; } // 设定为可能的最低速度。
-#else
-  // 计算正常步进生成的步进时序和定时器预分频器。
-  if (cycles < (1UL << 16)) { // < 65536  (16MHz 下 4.1ms)
-    prep_segment->prescaler = 1; // 预分频器：0
-    prep_segment->cycles_per_tick = cycles;
-  } else if (cycles < (1UL << 19)) { // < 524288 (16MHz 下 32.8ms)
-    prep_segment->prescaler = 2; // 预分频器：8
-    prep_segment->cycles_per_tick = cycles >> 3;
-  } else {
-    prep_segment->prescaler = 3; // 预分频器：64
-    if (cycles < (1UL << 22)) { // < 4194304 (16MHz 下 262ms)
-      prep_segment->cycles_per_tick = cycles >> 6;
-    } else { // 设定为可能的最低速度。 （约 4 步/秒）。
-      prep_segment->cycles_per_tick = 0xffff;
+    // Check for exit conditions and flag to load next planner block.
+    if (mm_remaining == prep.mm_complete) {
+      // End of planner block or forced-termination. No more distance to be executed.
+      if (mm_remaining > 0.0) { // At end of forced-termination.
+        // Reset prep parameters for resuming and then bail. Allow the stepper ISR to complete
+        // the segment queue, where realtime protocol will set new state upon receiving the
+        // cycle stop flag from the ISR. Prep_segment is blocked until then.
+        bit_true(sys.step_control,STEP_CONTROL_END_MOTION);
+        #ifdef PARKING_ENABLE
+          if (!(prep.recalculate_flag & PREP_FLAG_PARKING)) { prep.recalculate_flag |= PREP_FLAG_HOLD_PARTIAL_BLOCK; }
+        #endif
+        return; // Bail!
+      } else { // End of planner block
+        // The planner block is complete. All steps are set to be executed in the segment buffer.
+        if (sys.step_control & STEP_CONTROL_EXECUTE_SYS_MOTION) {
+          bit_true(sys.step_control,STEP_CONTROL_END_MOTION);
+          return;
+        }
+        pl_block = NULL; // Set pointer to indicate check and load next planner block.
+        plan_discard_current_block();
+      }
     }
-  }
-#endif
 
-// 段完成！增加段缓冲区索引，以便步进 ISR 可以立即执行它。
-segment_buffer_head = segment_next_head;
-if (++segment_next_head == SEGMENT_BUFFER_SIZE) { segment_next_head = 0; }
-
-// 更新适当的规划器和段数据。
-pl_block->millimeters = mm_remaining;
-prep.steps_remaining = n_steps_remaining;
-prep.dt_remainder = (n_steps_remaining - step_dist_remaining) * inv_rate;
-
-// 检查退出条件并标记以加载下一个规划块。
-if (mm_remaining == prep.mm_complete) {
-  // 规划块结束或强制终止。没有更多的距离可以执行。
-  if (mm_remaining > 0.0) { // 在强制终止的末尾。
-    // 重置准备参数以恢复，然后退出。允许步进 ISR 完成段队列，实时协议将在收到
-    // ISR 的循环停止标志后设置新状态。Prep_segment 被阻止，直到那时。
-    bit_true(sys.step_control, STEP_CONTROL_END_MOTION);
-    #ifdef PARKING_ENABLE
-      if (!(prep.recalculate_flag & PREP_FLAG_PARKING)) { prep.recalculate_flag |= PREP_FLAG_HOLD_PARTIAL_BLOCK; }
-    #endif
-    return; // 退出！
-  } else { // 规划块结束
-    // 规划块已完成。所有步骤已设置为在段缓冲区中执行。
-    if (sys.step_control & STEP_CONTROL_EXECUTE_SYS_MOTION) {
-      bit_true(sys.step_control, STEP_CONTROL_END_MOTION);
-      return;
-    }
-    pl_block = NULL; // 设置指针以指示检查并加载下一个规划块。
-    plan_discard_current_block();
   }
 }
 
-}
 
-// 实时状态报告调用以获取当前执行的速度。此值
-// 实际上不是当前速度，而是在段缓冲区中上一个步骤段中计算的速度。
-// 它始终落后于最多段块数（-1）
-// 除以加速度每秒的滴答数（ACCELERATION TICKS PER SECOND）秒数。
+// Called by realtime status reporting to fetch the current speed being executed. This value
+// however is not exactly the current speed, but the speed computed in the last step segment
+// in the segment buffer. It will always be behind by up to the number of segment blocks (-1)
+// divided by the ACCELERATION TICKS PER SECOND in seconds.
 float st_get_realtime_rate()
 {
   if (sys.state & (STATE_CYCLE | STATE_HOMING | STATE_HOLD | STATE_JOG | STATE_SAFETY_DOOR)){
