@@ -1,3 +1,4 @@
+
 /*
   protocol.c - 控制 Grbl 的执行协议和流程
   Grbl 的一部分
@@ -26,9 +27,10 @@
 #define LINE_FLAG_COMMENT_SEMICOLON bit(2)
 
 
-static char line[LINE_BUFFER_SIZE]; // Line to be executed. Zero-terminated.
+static char line[LINE_BUFFER_SIZE]; // 要执行的行。零结尾。
 
 static void protocol_exec_rt_suspend();
+
 
 /*
   GRBL 主循环：
@@ -148,21 +150,21 @@ void protocol_main_loop()
       }
     }
 
-    // If there are no more characters in the serial read buffer to be processed and executed,
-    // this indicates that g-code streaming has either filled the planner buffer or has
-    // completed. In either case, auto-cycle start, if enabled, any queued moves.
+    // 如果串行读取缓冲区中没有更多字符可处理和执行，
+    // 则表示 g-code 流已填满计划缓冲区或已完成。
+    // 无论是哪种情况，如果启用了自动循环启动，将执行所有排队的移动。
     protocol_auto_cycle_start();
 
-    protocol_execute_realtime();  // Runtime command check point.
-    if (sys.abort) { return; } // Bail to main() program loop to reset system.
+    protocol_execute_realtime();  // 运行时命令检查点。
+    if (sys.abort) { return; } // 放弃到 main() 程序循环以重置系统。
               
     #ifdef SLEEP_ENABLE
-      // Check for sleep conditions and execute auto-park, if timeout duration elapses.
+      // 检查是否满足休眠条件，并在超时时执行自动停放。
       sleep_check();    
     #endif
   }
 
-  return; /* Never reached */
+  return; /* 永远不会达到此点 */
 }
 
 
@@ -191,17 +193,14 @@ void protocol_auto_cycle_start()
 }
 
 
-// This function is the general interface to Grbl's real-time command execution system. It is called
-// from various check points in the main program, primarily where there may be a while loop waiting
-// for a buffer to clear space or any point where the execution time from the last check point may
-// be more than a fraction of a second. This is a way to execute realtime commands asynchronously
-// (aka multitasking) with grbl's g-code parsing and planning functions. This function also serves
-// as an interface for the interrupts to set the system realtime flags, where only the main program
-// handles them, removing the need to define more computationally-expensive volatile variables. This
-// also provides a controlled way to execute certain tasks without having two or more instances of
-// the same task, such as the planner recalculating the buffer upon a feedhold or overrides.
-// NOTE: The sys_rt_exec_state variable flags are set by any process, step or serial interrupts, pinouts,
-// limit switches, or the main program.
+
+// 此函数是 Grbl 运行时命令执行系统的通用接口。它在主程序中的各种检查点调用，
+// 主要是在等待缓冲区释放空间的循环中，或执行时间超过检查点所需的时间时。
+// 这是 Grbl 的 g-code 解析和计划功能的异步执行实时命令的方法（也称为多任务）。
+// 此外，此函数还作为中断设置系统实时标志的接口，只有主程序处理它们，
+// 避免了定义更耗资源的易变变量的需求。这也提供了一种受控的方法来执行某些任务，
+// 而不会出现相同任务的多个实例，例如当暂停或覆盖时，计划器重新计算缓冲区。
+// 注意：sys_rt_exec_state 变量标志由任何过程、步进或串行中断、输出引脚、限位开关或主程序设置。
 void protocol_execute_realtime()
 {
   protocol_exec_rt_system();
@@ -294,7 +293,7 @@ void protocol_exec_rt_system()
                     st_update_plan_block_parameters(); // 通知步进模块重新计算暂停减速。
                     sys.step_control = (STEP_CONTROL_EXECUTE_HOLD | STEP_CONTROL_EXECUTE_SYS_MOTION);
                     sys.suspend &= ~(SUSPEND_HOLD_COMPLETE);
-                  } 
+                  } // else NO_MOTION is active.
                 #endif
                 sys.suspend &= ~(SUSPEND_RETRACT_COMPLETE | SUSPEND_INITIATE_RESTORE | SUSPEND_RESTORE_COMPLETE);
                 sys.suspend |= SUSPEND_RESTART_RETRACT;
@@ -316,38 +315,37 @@ void protocol_exec_rt_system()
       system_clear_exec_state_flag((EXEC_MOTION_CANCEL | EXEC_FEED_HOLD | EXEC_SAFETY_DOOR | EXEC_SLEEP));
     }
 
-    // Execute a cycle start by starting the stepper interrupt to begin executing the blocks in queue.
+    // 执行循环启动，通过启动步进器中断开始执行队列中的块。
     if (rt_exec & EXEC_CYCLE_START) {
-      // Block if called at same time as the hold commands: feed hold, motion cancel, and safety door.
-      // Ensures auto-cycle-start doesn't resume a hold without an explicit user-input.
+        // 如果与保持命令（进给保持、运动取消和安全门）同时调用则阻塞。
+  // 确保自动循环启动不会在没有用户明确输入的情况下恢复保持。
       if (!(rt_exec & (EXEC_FEED_HOLD | EXEC_MOTION_CANCEL | EXEC_SAFETY_DOOR))) {
-        // Resume door state when parking motion has retracted and door has been closed.
+        // 当停车运动已缩回且门已关闭时恢复门状态。
         if ((sys.state == STATE_SAFETY_DOOR) && !(sys.suspend & SUSPEND_SAFETY_DOOR_AJAR)) {
           if (sys.suspend & SUSPEND_RESTORE_COMPLETE) {
-            sys.state = STATE_IDLE; // Set to IDLE to immediately resume the cycle.
+            sys.state = STATE_IDLE; // 设为 IDLE 以立即恢复循环。
           } else if (sys.suspend & SUSPEND_RETRACT_COMPLETE) {
-            // Flag to re-energize powered components and restore original position, if disabled by SAFETY_DOOR.
-            // NOTE: For a safety door to resume, the switch must be closed, as indicated by HOLD state, and
-            // the retraction execution is complete, which implies the initial feed hold is not active. To
-            // restore normal operation, the restore procedures must be initiated by the following flag. Once,
-            // they are complete, it will call CYCLE_START automatically to resume and exit the suspend.
+            // 标志重新激活已停电的部件并恢复原始位置，若已被 SAFETY_DOOR 禁用。
+            // 注意：安全门恢复前必须关闭开关（显示为 HOLD 状态），且缩回完成，
+            // 暗示初始进给保持未激活。为了恢复正常操作，恢复过程由以下标志触发。
+            // 一旦完成，将自动调用 CYCLE_START 以恢复并退出挂起。
             sys.suspend |= SUSPEND_INITIATE_RESTORE;
           }
         }
-        // Cycle start only when IDLE or when a hold is complete and ready to resume.
+        // 仅在空闲状态或保持已完成且准备恢复时启动循环。
         if ((sys.state == STATE_IDLE) || ((sys.state & STATE_HOLD) && (sys.suspend & SUSPEND_HOLD_COMPLETE))) {
           if (sys.state == STATE_HOLD && sys.spindle_stop_ovr) {
-            sys.spindle_stop_ovr |= SPINDLE_STOP_OVR_RESTORE_CYCLE; // Set to restore in suspend routine and cycle start after.
+            sys.spindle_stop_ovr |= SPINDLE_STOP_OVR_RESTORE_CYCLE; // 设置以在挂起例程中恢复并在后续启动循环。
           } else {
-            // Start cycle only if queued motions exist in planner buffer and the motion is not canceled.
-            sys.step_control = STEP_CONTROL_NORMAL_OP; // Restore step control to normal operation
+            // 仅在计划器缓冲区中存在排队的运动且未取消运动时启动循环。
+            sys.step_control = STEP_CONTROL_NORMAL_OP; // 恢复步进控制到正常操作
             if (plan_get_current_block() && bit_isfalse(sys.suspend,SUSPEND_MOTION_CANCEL)) {
-              sys.suspend = SUSPEND_DISABLE; // Break suspend state.
+              sys.suspend = SUSPEND_DISABLE; // 退出挂起状态。
               sys.state = STATE_CYCLE;
-              st_prep_buffer(); // Initialize step segment buffer before beginning cycle.
+              st_prep_buffer(); // 在开始循环前初始化步进段缓冲区。
               st_wake_up();
-            } else { // Otherwise, do nothing. Set and resume IDLE state.
-              sys.suspend = SUSPEND_DISABLE; // Break suspend state.
+            } else { // 否则，什么也不做。设置并恢复到 IDLE 状态。
+              sys.suspend = SUSPEND_DISABLE; // 退出挂起状态。
               sys.state = STATE_IDLE;
             }
           }
@@ -357,28 +355,27 @@ void protocol_exec_rt_system()
     }
 
     if (rt_exec & EXEC_CYCLE_STOP) {
-      // Reinitializes the cycle plan and stepper system after a feed hold for a resume. Called by
-      // realtime command execution in the main program, ensuring that the planner re-plans safely.
-      // NOTE: Bresenham algorithm variables are still maintained through both the planner and stepper
-      // cycle reinitializations. The stepper path should continue exactly as if nothing has happened.
-      // NOTE: EXEC_CYCLE_STOP is set by the stepper subsystem when a cycle or feed hold completes.
+        // 进给保持后重新初始化循环计划和步进系统以供恢复。
+  // 由主程序中的实时命令执行调用，确保计划器安全地重新计划。
+  // 注意：Bresenham 算法变量在计划器和步进循环重新初始化期间均保持。
+  // 步进路径应继续，就像未发生任何事情一样。
+  // 注意：EXEC_CYCLE_STOP 由步进子系统在循环或进给保持完成时设置。
       if ((sys.state & (STATE_HOLD|STATE_SAFETY_DOOR|STATE_SLEEP)) && !(sys.soft_limit) && !(sys.suspend & SUSPEND_JOG_CANCEL)) {
-        // Hold complete. Set to indicate ready to resume.  Remain in HOLD or DOOR states until user
-        // has issued a resume command or reset.
+        // 保持完成。设置为表示准备恢复。保持在 HOLD 或 DOOR 状态，直到用户发出恢复命令或重置。
         plan_cycle_reinitialize();
         if (sys.step_control & STEP_CONTROL_EXECUTE_HOLD) { sys.suspend |= SUSPEND_HOLD_COMPLETE; }
         bit_false(sys.step_control,(STEP_CONTROL_EXECUTE_HOLD | STEP_CONTROL_EXECUTE_SYS_MOTION));
       } else {
-        // Motion complete. Includes CYCLE/JOG/HOMING states and jog cancel/motion cancel/soft limit events.
-        // NOTE: Motion and jog cancel both immediately return to idle after the hold completes.
-        if (sys.suspend & SUSPEND_JOG_CANCEL) {   // For jog cancel, flush buffers and sync positions.
+        // 运动完成。包括 CYCLE/JOG/HOMING 状态以及慢跑取消/运动取消/软限位事件。
+        // 注意：运动和慢跑取消在保持完成后均立即返回到空闲。
+        if (sys.suspend & SUSPEND_JOG_CANCEL) {   // 对于慢跑取消，刷新缓冲区并同步位置。
           sys.step_control = STEP_CONTROL_NORMAL_OP;
           plan_reset();
           st_reset();
           gc_sync_position();
           plan_sync_position();
         }
-        if (sys.suspend & SUSPEND_SAFETY_DOOR_AJAR) { // Only occurs when safety door opens during jog.
+        if (sys.suspend & SUSPEND_SAFETY_DOOR_AJAR) { // 仅在慢跑期间安全门打开时发生。
           sys.suspend &= ~(SUSPEND_JOG_CANCEL);
           sys.suspend |= SUSPEND_HOLD_COMPLETE;
           sys.state = STATE_SAFETY_DOOR;
@@ -391,10 +388,10 @@ void protocol_exec_rt_system()
     }
   }
 
-  // Execute overrides.
-  rt_exec = sys_rt_exec_motion_override; // Copy volatile sys_rt_exec_motion_override
+  // 执行覆盖。
+  rt_exec = sys_rt_exec_motion_override; // 复制易变的 sys_rt_exec_motion_override
   if (rt_exec) {
-    system_clear_exec_motion_overrides(); // Clear all motion override flags.
+    system_clear_exec_motion_overrides(); // 清除所有运动覆盖标志。
 
     uint8_t new_f_override =  sys.f_override;
     if (rt_exec & EXEC_FEED_OVR_RESET) { new_f_override = DEFAULT_FEED_OVERRIDE; }
@@ -413,7 +410,7 @@ void protocol_exec_rt_system()
     if ((new_f_override != sys.f_override) || (new_r_override != sys.r_override)) {
       sys.f_override = new_f_override;
       sys.r_override = new_r_override;
-      sys.report_ovr_counter = 0; // Set to report change immediately
+      sys.report_ovr_counter = 0; // 设置为立即报告更改
       plan_update_velocity_profile_parameters();
       plan_cycle_reinitialize();
     }
@@ -421,9 +418,9 @@ void protocol_exec_rt_system()
 
   rt_exec = sys_rt_exec_accessory_override;
   if (rt_exec) {
-    system_clear_exec_accessory_overrides(); // Clear all accessory override flags.
+    system_clear_exec_accessory_overrides(); // 清除所有附件覆盖标志。
 
-    // NOTE: Unlike motion overrides, spindle overrides do not require a planner reinitialization.
+    // 注意：与运动覆盖不同，主轴覆盖不需要重新初始化计划器。
     uint8_t last_s_override =  sys.spindle_speed_ovr;
     if (rt_exec & EXEC_SPINDLE_OVR_RESET) { last_s_override = DEFAULT_SPINDLE_SPEED_OVERRIDE; }
     if (rt_exec & EXEC_SPINDLE_OVR_COARSE_PLUS) { last_s_override += SPINDLE_OVERRIDE_COARSE_INCREMENT; }
@@ -436,20 +433,19 @@ void protocol_exec_rt_system()
     if (last_s_override != sys.spindle_speed_ovr) {
       bit_true(sys.step_control, STEP_CONTROL_UPDATE_SPINDLE_PWM);
       sys.spindle_speed_ovr = last_s_override;
-      sys.report_ovr_counter = 0; // Set to report change immediately
+      sys.report_ovr_counter = 0; // 设置为立即报告更改
     }
 
     if (rt_exec & EXEC_SPINDLE_OVR_STOP) {
-      // Spindle stop override allowed only while in HOLD state.
-      // NOTE: Report counters are set in spindle_set_state() when spindle stop is executed.
+      // 主轴停止覆盖仅在 HOLD 状态下允许。
+      // 注意：执行主轴停止时，报告计数器在 spindle_set_state() 中设置。
       if (sys.state == STATE_HOLD) {
         if (!(sys.spindle_stop_ovr)) { sys.spindle_stop_ovr = SPINDLE_STOP_OVR_INITIATE; }
         else if (sys.spindle_stop_ovr & SPINDLE_STOP_OVR_ENABLED) { sys.spindle_stop_ovr |= SPINDLE_STOP_OVR_RESTORE; }
       }
     }
 
-    // NOTE: Since coolant state always performs a planner sync whenever it changes, the current
-    // run state can be determined by checking the parser state.
+    // 注意：冷却液状态在每次更改时始终执行计划器同步，当前运行状态可通过检查解析器状态确定。
     if (rt_exec & (EXEC_COOLANT_FLOOD_OVR_TOGGLE | EXEC_COOLANT_MIST_OVR_TOGGLE)) {
       if ((sys.state == STATE_IDLE) || (sys.state & (STATE_CYCLE | STATE_HOLD))) {
         uint8_t coolant_state = gc_state.modal.coolant;
@@ -461,7 +457,7 @@ void protocol_exec_rt_system()
           if (coolant_state & COOLANT_FLOOD_ENABLE) { bit_false(coolant_state,COOLANT_FLOOD_ENABLE); }
           else { coolant_state |= COOLANT_FLOOD_ENABLE; }
         }
-        coolant_set_state(coolant_state); // Report counter set in coolant_set_state().
+        coolant_set_state(coolant_state); // 报告计数器在 coolant_set_state() 中设置。
         gc_state.modal.coolant = coolant_state;
       }
     }
@@ -474,7 +470,7 @@ void protocol_exec_rt_system()
     }
   #endif
 
-  // Reload step segment buffer
+  // 重新加载步进段缓冲区
   if (sys.state & (STATE_CYCLE | STATE_HOLD | STATE_SAFETY_DOOR | STATE_HOMING | STATE_SLEEP| STATE_JOG)) {
     st_prep_buffer();
   }
@@ -482,11 +478,10 @@ void protocol_exec_rt_system()
 }
 
 
-// Handles Grbl system suspend procedures, such as feed hold, safety door, and parking motion.
-// The system will enter this loop, create local variables for suspend tasks, and return to
-// whatever function that invoked the suspend, such that Grbl resumes normal operation.
-// This function is written in a way to promote custom parking motions. Simply use this as a
-// template
+// 处理 Grbl 系统的暂停程序，例如进给保持、安全门和停车运动。
+// 系统将进入此循环，为暂停任务创建局部变量，并返回调用暂停的函数，
+// 以便 Grbl 恢复正常操作。此函数的编写方式支持自定义停车运动。
+// 可以将其用作模板
 static void protocol_exec_rt_suspend()
 {
   #ifdef PARKING_ENABLE
@@ -496,8 +491,8 @@ static void protocol_exec_rt_suspend()
     float retract_waypoint = PARKING_PULLOUT_INCREMENT;
     plan_line_data_t plan_data;
     plan_line_data_t *pl_data = &plan_data;
-    memset(pl_data, 0, sizeof(plan_line_data_t));
-    pl_data->condition = (PL_COND_FLAG_SYSTEM_MOTION | PL_COND_FLAG_NO_FEED_OVERRIDE);
+    memset(pl_data,0,sizeof(plan_line_data_t));
+    pl_data->condition = (PL_COND_FLAG_SYSTEM_MOTION|PL_COND_FLAG_NO_FEED_OVERRIDE);
     pl_data->line_number = PARKING_MOTION_LINE_NUMBER;
   #endif
 
@@ -512,7 +507,7 @@ static void protocol_exec_rt_suspend()
     restore_spindle_speed = block->spindle_speed;
   }
   #ifdef DISABLE_LASER_DURING_HOLD
-    if (bit_istrue(settings.flags, BITFLAG_LASER_MODE)) { 
+    if (bit_istrue(settings.flags,BITFLAG_LASER_MODE)) { 
       system_set_exec_accessory_override_flag(EXEC_SPINDLE_OVR_STOP);
     }
   #endif
@@ -527,7 +522,7 @@ static void protocol_exec_rt_suspend()
       // 停车管理器。处理去/恢复通电，检查开关状态，以及安全门和休眠状态的停车运动。
       if (sys.state & (STATE_SAFETY_DOOR | STATE_SLEEP)) {
       
-        // Handles retraction motions and de-energizing.
+        // 处理缩回运动和去电。
         if (bit_isfalse(sys.suspend,SUSPEND_RETRACT_COMPLETE)) {
 
           // 确保在安全门例程开始时禁用所有先前的主轴停止覆盖。
@@ -535,40 +530,39 @@ static void protocol_exec_rt_suspend()
 
           #ifndef PARKING_ENABLE
 
-            spindle_set_state(SPINDLE_DISABLE,0.0); // De-energize
-            coolant_set_state(COOLANT_DISABLE);     // De-energize
+            spindle_set_state(SPINDLE_DISABLE,0.0); // 去电
+            coolant_set_state(COOLANT_DISABLE);     // 去电
 
           #else
 					
-            // Get current position and store restore location and spindle retract waypoint.
+            // 获取当前位置并存储恢复位置和主轴缩回路径点。
             system_convert_array_steps_to_mpos(parking_target,sys_position);
             if (bit_isfalse(sys.suspend,SUSPEND_RESTART_RETRACT)) {
               memcpy(restore_target,parking_target,sizeof(parking_target));
               retract_waypoint += restore_target[PARKING_AXIS];
-              retract_waypoint = min(retract_waypoint, PARKING_TARGET);
+              retract_waypoint = min(retract_waypoint,PARKING_TARGET);
             }
 
-            // Execute slow pull-out parking retract motion. Parking requires homing enabled, the
-            // current location not exceeding the parking target location, and laser mode disabled.
-            // NOTE: State is will remain DOOR, until the de-energizing and retract is complete.
+            // 执行缓慢的拉出停车缩回运动。停车需要启用归位，不超过停车目标位置，并且激光模式已禁用。
+            // 注意：状态将保持为 DOOR，直到去电和缩回完成。
             if ((bit_istrue(settings.flags,BITFLAG_HOMING_ENABLE)) &&
                             (parking_target[PARKING_AXIS] < PARKING_TARGET) &&
-                            bit_isfalse(settings.flags, BITFLAG_LASER_MODE)) {
+                            bit_isfalse(settings.flags,BITFLAG_LASER_MODE)) {
 
               // 通过拉出距离缩回主轴。确保缩回运动远离工件且路径点运动不超过停车目标位置。
               if (parking_target[PARKING_AXIS] < retract_waypoint) {
                 parking_target[PARKING_AXIS] = retract_waypoint;
                 pl_data->feed_rate = PARKING_PULLOUT_RATE;
-                pl_data->condition |= (restore_condition & PL_COND_ACCESSORY_MASK); // 保持配件状态
+                pl_data->condition |= (restore_condition & PL_COND_ACCESSORY_MASK); // Retain accessory state
                 pl_data->spindle_speed = restore_spindle_speed;
                 mc_parking_motion(parking_target, pl_data);
               }
 
-              // NOTE: Clear accessory state after retract and after an aborted restore motion.
+              // 注意：缩回后和恢复运动中止后清除配件状态。
               pl_data->condition = (PL_COND_FLAG_SYSTEM_MOTION|PL_COND_FLAG_NO_FEED_OVERRIDE);
               pl_data->spindle_speed = 0.0;
-              spindle_set_state(SPINDLE_DISABLE,0.0); // De-energize
-              coolant_set_state(COOLANT_DISABLE); // De-energize
+              spindle_set_state(SPINDLE_DISABLE,0.0); // 去电
+              coolant_set_state(COOLANT_DISABLE); // 去电
 
               // 执行快速停车缩回运动到停车目标位置。
               if (parking_target[PARKING_AXIS] < PARKING_TARGET) {
@@ -579,10 +573,10 @@ static void protocol_exec_rt_suspend()
 
             } else {
 
-              // Parking motion not possible. Just disable the spindle and coolant.
-              // NOTE: Laser mode does not start a parking motion to ensure the laser stops immediately.
-              spindle_set_state(SPINDLE_DISABLE,0.0); // De-energize
-              coolant_set_state(COOLANT_DISABLE);     // De-energize
+              // 无法进行停车运动。只需禁用主轴和冷却液。
+              // 注意：激光模式不会启动停车运动，以确保激光立即停止。
+              spindle_set_state(SPINDLE_DISABLE,0.0); // 去电
+              coolant_set_state(COOLANT_DISABLE);     // 去电
 
             }
 
@@ -596,18 +590,18 @@ static void protocol_exec_rt_suspend()
           
           if (sys.state == STATE_SLEEP) {
             report_feedback_message(MESSAGE_SLEEP_MODE);
-            // Spindle and coolant should already be stopped, but do it again just to be sure.
-            spindle_set_state(SPINDLE_DISABLE,0.0); // De-energize
-            coolant_set_state(COOLANT_DISABLE); // De-energize
-            st_go_idle(); // Disable steppers
-            while (!(sys.abort)) { protocol_exec_rt_system(); } // Do nothing until reset.
-            return; // Abort received. Return to re-initialize.
+            // 主轴和冷却液应已停止，但再次执行以确保。
+            spindle_set_state(SPINDLE_DISABLE,0.0); // 去电
+            coolant_set_state(COOLANT_DISABLE); // 去电
+            st_go_idle(); // 禁用步进器
+            while (!(sys.abort)) { protocol_exec_rt_system(); } // 在重置前不做任何操作。
+            return; // 收到中止信号。返回以重新初始化。
           }    
           
           // 允许从停车/安全门恢复。主动检查安全门是否关闭且准备恢复。
           if (sys.state == STATE_SAFETY_DOOR) {
             if (!(system_check_safety_door_ajar())) {
-              sys.suspend &= ~(SUSPEND_SAFETY_DOOR_AJAR); // Reset door ajar flag to denote ready to resume.
+              sys.suspend &= ~(SUSPEND_SAFETY_DOOR_AJAR); // 允许从停车/安全门恢复。主动检查安全门是否关闭且准备恢复。
             }
           }
 
@@ -649,7 +643,6 @@ static void protocol_exec_rt_suspend()
               }
             }
 
-
             #ifdef PARKING_ENABLE
               // 从拉出位置执行缓慢插入运动以恢复到原位置。
               if ((settings.flags & (BITFLAG_HOMING_ENABLE | BITFLAG_LASER_MODE)) == BITFLAG_HOMING_ENABLE) {
@@ -665,13 +658,14 @@ static void protocol_exec_rt_suspend()
               }
             #endif
 
-            if (bit_isfalse(sys.suspend, SUSPEND_RESTART_RETRACT)) {
+            if (bit_isfalse(sys.suspend,SUSPEND_RESTART_RETRACT)) {
               sys.suspend |= SUSPEND_RESTORE_COMPLETE;
               system_set_exec_state_flag(EXEC_CYCLE_START); // 设置恢复程序。
             }
           }
 
         }
+
 
       } else {
 
