@@ -81,7 +81,7 @@
   #define SPINDLE_ENABLE_BIT      3 // MEGA2560 Digital Pin 6
   #define SPINDLE_DIRECTION_DDR   DDRE
   #define SPINDLE_DIRECTION_PORT  PORTE
-  #define SPINDLE_DIRECTION_BIT   3 // MEGA2560 Digital Pin 5
+  #define SPINDLE_DIRECTION_BIT   3 // ME9GA2560 Digital Pin 5
 
 // 定义冷却液（flood）和雾状冷却（mist）启用输出引脚。
   #define COOLANT_FLOOD_DDR   DDRH

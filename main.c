@@ -88,7 +88,7 @@ int main(void)
 
     // 打印欢迎消息。指示在上电或重置时发生了初始化。
     report_init_message();
-
+    
     // 启动 Grbl 主循环。处理程序输入并执行它们。
     protocol_main_loop();
 

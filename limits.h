@@ -12,6 +12,8 @@
   你应该已经收到一份 GNU 通用公共许可证的副本，随 Grbl 一起。如果没有，请参阅 <http://www.gnu.org/licenses/>。
 */
 
+extern parser_block_t gc_block;
+parser_state_t gc_state;
 // 初始化限位模块
 void limits_init();
 

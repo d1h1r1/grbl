@@ -191,7 +191,7 @@
 // 该选项强制 Grbl 始终初始化为警报状态，无论是否启用归位。
 // 此选项主要用于希望此电源循环行为的 OEM 和 LinuxCNC 用户。
 
-// #define FORCE_INITIALIZATION_ALARM // 默认禁用。注意：在 config.h 中启用 M7 雾状冷却。
+// #define FORCE_INITIALIZATION_ALARM // 默认禁用。
 
 // 在上电或重置时，Grbl 将检查限位开关状态，以确保它们未处于活动状态
 // 然后再初始化。如果检测到问题并且启用了硬限位设置，Grbl 将
@@ -416,7 +416,7 @@
 // 但它不会修复外部源的信号电缆上的电气干扰问题。
 // 建议首先使用屏蔽信号电缆，并将其屏蔽层连接到地面（旧 USB/计算机电缆有效且便宜）
 // 并在每个限位引脚中连接一个低通电路。
-// #define ENABLE_SOFTWARE_DEBOUNCE // 默认禁用。取消注释以启用。
+#define ENABLE_SOFTWARE_DEBOUNCE // 默认禁用。取消注释以启用。
 
 // 配置 Grbl 检查模式下探测周期后的位置信息。
 // 禁用时将位置设置为探测目标，启用时将位置设置为起始位置。
@@ -429,7 +429,7 @@
 // 仅当您的系统/电子设备能够保证开关不会弹跳时，
 // 我们建议启用此选项。这将有助于防止在机器从开关 disengage 时触发硬限位。
 // 注意：如果启用 SOFTWARE_DEBOUNCE，此选项将无效。
-// #define HARD_LIMIT_FORCE_STATE_CHECK // 默认禁用。取消注释以启用。
+#define HARD_LIMIT_FORCE_STATE_CHECK // 默认禁用。取消注释以启用。
 
 // 调整归位循环搜索和定位标量。
 // 这些是 Grbl 的归位循环使用的乘数，

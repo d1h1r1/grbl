@@ -48,6 +48,7 @@ uint8_t spindle_get_state()
 	return(SPINDLE_STATE_DISABLE);
 }
 
+
 // 禁用主轴，并在启用PWM可变主轴速度时将PWM输出设置为零。
 // 由各种主程序和ISR例程调用。保持例程简短、快速和高效。
 // 由 spindle_init()、spindle_set_speed()、spindle_set_state() 和 mc_reset() 调用。

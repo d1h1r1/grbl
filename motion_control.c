@@ -206,45 +206,45 @@ void mc_homing_cycle(uint8_t cycle_mask)
 
   limits_disable(); // 禁用硬限制引脚更改寄存器以便在循环期间使用
 
-// -------------------------------------------------------------------------------------
-// 执行归零程序。注意：特殊运动情况。只有系统重置有效。
+  // -------------------------------------------------------------------------------------
+  // 执行归零程序。注意：特殊运动情况。只有系统重置有效。
 
-#ifdef HOMING_SINGLE_AXIS_COMMANDS
-    if (cycle_mask) { limits_go_home(cycle_mask); } // 根据掩码执行归零循环。
-    else
-#endif
-{
-    // 以更快的归零搜索速度使所有轴的限位开关接通。
-    limits_go_home(HOMING_CYCLE_0);  // 归零循环 0
-    #ifdef HOMING_CYCLE_1
-      limits_go_home(HOMING_CYCLE_1);  // 归零循环 1
-    #endif
-    #ifdef HOMING_CYCLE_2
-      limits_go_home(HOMING_CYCLE_2);  // 归零循环 2
-    #endif
-    #ifdef HOMING_CYCLE_3
-      limits_go_home(HOMING_CYCLE_3);  // 归零循环 3
-    #endif
-    #ifdef HOMING_CYCLE_4
-      limits_go_home(HOMING_CYCLE_4);  // 归零循环 4
-    #endif
-    #ifdef HOMING_CYCLE_5
-      limits_go_home(HOMING_CYCLE_5);  // 归零循环 5
-    #endif
-}
+  #ifdef HOMING_SINGLE_AXIS_COMMANDS
+      if (cycle_mask) { limits_go_home(cycle_mask); } // 根据掩码执行归零循环。
+      else
+  #endif
+  {
+      // 以更快的归零搜索速度使所有轴的限位开关接通。
+      limits_go_home(HOMING_CYCLE_0);  // 归零循环 0
+      #ifdef HOMING_CYCLE_1
+        limits_go_home(HOMING_CYCLE_1);  // 归零循环 1
+      #endif
+      #ifdef HOMING_CYCLE_2
+        limits_go_home(HOMING_CYCLE_2);  // 归零循环 2
+      #endif
+      #ifdef HOMING_CYCLE_3
+        limits_go_home(HOMING_CYCLE_3);  // 归零循环 3
+      #endif
+      #ifdef HOMING_CYCLE_4
+        limits_go_home(HOMING_CYCLE_4);  // 归零循环 4
+      #endif
+      #ifdef HOMING_CYCLE_5
+        limits_go_home(HOMING_CYCLE_5);  // 归零循环 5
+      #endif
+  }
 
-protocol_execute_realtime(); // 检查重置并设置系统中止。
-if (sys.abort) { return; } // 未完成。由 mc_alarm 设置的警报状态。
+  protocol_execute_realtime(); // 检查重置并设置系统中止。
+  if (sys.abort) { return; } // 未完成。由 mc_alarm 设置的警报状态。
 
-// 归零循环完成！设置系统以正常运行。
-// -------------------------------------------------------------------------------------
+  // 归零循环完成！设置系统以正常运行。
+  // -------------------------------------------------------------------------------------
 
-// 同步 G-code 解析器和规划器位置到归零位置。
-gc_sync_position();
-plan_sync_position();
+  // 同步 G-code 解析器和规划器位置到归零位置。
+  gc_sync_position();
+  plan_sync_position();
 
-// 如果启用了硬限制功能，在归零循环后重新启用硬限制引脚更改寄存器。
-limits_init();
+  // 如果启用了硬限制功能，在归零循环后重新启用硬限制引脚更改寄存器。
+  limits_init();
 }
 
 // 执行工具长度探测循环。需要探测开关。
@@ -289,29 +289,29 @@ uint8_t mc_probe_cycle(float *target, plan_line_data_t *pl_data, uint8_t parser_
 
   // 探测循环完成！
 
-// 如果探测失败且启用了带错误的循环，则设置状态变量并输出错误。
-if (sys_probe_state == PROBE_ACTIVE) {
-    if (is_no_error) { memcpy(sys_probe_position, sys_position, sizeof(sys_position)); }
-    else { system_set_exec_alarm(EXEC_ALARM_PROBE_FAIL_CONTACT); }
-} else {
-    sys.probe_succeeded = true; // 表示探测循环成功完成。
-}
-sys_probe_state = PROBE_OFF; // 确保探测状态监控被禁用。
-probe_configure_invert_mask(false); // 重新初始化反转掩码。
-protocol_execute_realtime();   // 检查并执行实时命令
+  // 如果探测失败且启用了带错误的循环，则设置状态变量并输出错误。
+  if (sys_probe_state == PROBE_ACTIVE) {
+      if (is_no_error) { memcpy(sys_probe_position, sys_position, sizeof(sys_position)); }
+      else { system_set_exec_alarm(EXEC_ALARM_PROBE_FAIL_CONTACT); }
+  } else {
+      sys.probe_succeeded = true; // 表示探测循环成功完成。
+  }
+  sys_probe_state = PROBE_OFF; // 确保探测状态监控被禁用。
+  probe_configure_invert_mask(false); // 重新初始化反转掩码。
+  protocol_execute_realtime();   // 检查并执行实时命令
 
-// 重置步进器和规划器缓冲区，以清除探测运动的剩余部分。
-st_reset(); // 重置步进段缓冲区。
-plan_reset(); // 重置规划器缓冲区。将规划器位置归零。确保探测运动被清除。
-plan_sync_position(); // 将规划器位置同步到当前机器位置。
+  // 重置步进器和规划器缓冲区，以清除探测运动的剩余部分。
+  st_reset(); // 重置步进段缓冲区。
+  plan_reset(); // 重置规划器缓冲区。将规划器位置归零。确保探测运动被清除。
+  plan_sync_position(); // 将规划器位置同步到当前机器位置。
 
-#ifdef MESSAGE_PROBE_COORDINATES
-    // 所有完成！输出探测位置作为消息。
-    report_probe_parameters();
-#endif
+  #ifdef MESSAGE_PROBE_COORDINATES
+      // 所有完成！输出探测位置作为消息。
+      report_probe_parameters();
+  #endif
 
-if (sys.probe_succeeded) { return(GC_PROBE_FOUND); } // 成功的探测循环。
-else { return(GC_PROBE_FAIL_END); } // 在运动范围内未能触发探测。无论是否有错误。
+  if (sys.probe_succeeded) { return(GC_PROBE_FOUND); } // 成功的探测循环。
+  else { return(GC_PROBE_FAIL_END); } // 在运动范围内未能触发探测。无论是否有错误。
 }
 
 // 规划并执行停车的单一特殊运动情况。独立于主规划器缓冲区。
