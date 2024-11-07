@@ -147,7 +147,7 @@ uint8_t gc_execute_line(char *line)
               if (!((mantissa == 0) || (mantissa == 10))) { FAIL(STATUS_GCODE_UNSUPPORTED_COMMAND); }
               gc_block.non_modal_command += mantissa;
               mantissa = 0; // 设置为零以指示有效的非整数 G 命令。
-            }                
+            }
             break;
           case 0: case 1: case 2: case 3: case 38:
             // 检查在同一块中调用 G10/28/30/92 时是否调用了 G0/1/2/3/38。
@@ -250,7 +250,7 @@ uint8_t gc_execute_line(char *line)
               }
               break;
             case 6:
-              printPgmString(PSTR("\r\nM06自动换刀\r\n"));
+              // printPgmString(PSTR("\r\nM06自动换刀\r\n"));
               break; 
             case 7: case 8: case 9:
               word_bit = MODAL_GROUP_M8; 
@@ -304,6 +304,8 @@ uint8_t gc_execute_line(char *line)
             case 'T': word_bit = WORD_T; 
               if (value > MAX_TOOL_NUMBER) { FAIL(STATUS_GCODE_MAX_VALUE_EXCEEDED); }
               gc_block.values.t = int_value;
+              // printPgmString(PSTR("\r\n刀号\r\n"));
+              // printInteger(int_value);
               break;
             case 'X': word_bit = WORD_X; gc_block.values.xyz[X_AXIS] = value; axis_words |= (1<<X_AXIS); break;
             case 'Y': word_bit = WORD_Y; gc_block.values.xyz[Y_AXIS] = value; axis_words |= (1<<Y_AXIS); break;

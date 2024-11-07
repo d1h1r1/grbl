@@ -116,28 +116,8 @@ uint8_t limits_get_state()
       if (!(sys_rt_exec_alarm)) {
         // 检查限位引脚状态。 
         if (limits_get_state()) {
-          uint8_t limit_state = limits_get_state();
-          if (limit_state >> 3 == 1){
-            plan_line_data_t plan_data;
-            plan_line_data_t *pl_data = &plan_data;
-            memset(pl_data,0,sizeof(plan_line_data_t));
-            pl_data->condition |= PL_COND_FLAG_RAPID_MOTION;
-            pl_data->line_number = HOMING_CYCLE_LINE_NUMBER;
-            pl_data->feed_rate = 10; // 设置当前回原点速率。
-            gc_block.values.xyz[3] += 1;
-            plan_buffer_line(gc_block.values.xyz, pl_data); // 绕过 mc_line()。直接计划回原点运动。
-            st_prep_buffer(); // 准备并填充段缓冲区，来源于新计划的块。
-            st_wake_up(); // 启动运动
-            memcpy(gc_state.position, gc_block.values.xyz, sizeof(gc_block.values.xyz));
-            // st_reset(); // 立即强制停止步进电机并重置步进段缓冲区。
-            // delay_ms(settings.homing_debounce_delay); // 延迟以允许瞬态动态衰减。
-            // limits_disable();
-            // st_prep_buffer(); // 准备并填充段缓冲区，来源于新计划的块。
-            // st_wake_up(); // 启动运动
-          }else{
             mc_reset(); // 发起系统终止。
             system_set_exec_alarm(EXEC_ALARM_HARD_LIMIT); // 指示硬限位关键事件
-          }
         }
       }  
     }
