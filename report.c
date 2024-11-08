@@ -185,7 +185,7 @@ void report_grbl_settings() {
   report_util_float_setting(31,settings.rpm_min,N_DECIMAL_RPMVALUE);
   report_util_uint8_setting(32,bit_istrue(settings.flags,BITFLAG_LASER_MODE));
   // 打印轴设置
-  uint8_t idx, set_idx;
+  uint8_t idx, set_idx, tool_number;
   uint8_t val = AXIS_SETTINGS_START_VAL;
   for (set_idx=0; set_idx<AXIS_N_SETTINGS; set_idx++) {
     for (idx=0; idx<N_AXIS; idx++) {
@@ -197,6 +197,17 @@ void report_grbl_settings() {
       }
     }
     val += AXIS_SETTINGS_INCREMENT;
+  }
+  uint8_t tool_val = TOOL_SETTINGS_START_VAL;
+  report_util_uint8_setting(TOOL_SETTINGS_START_VAL-1,settings.tool);
+  for (tool_number=0; tool_number<TOOL_NUM; tool_number++) {
+    for (idx=0; idx<2; idx++) {
+      switch (idx) {
+        case 0: report_util_float_setting(tool_val+idx,settings.tool_x[tool_number],N_DECIMAL_SETTINGVALUE); break;
+        case 1: report_util_float_setting(tool_val+idx,settings.tool_y[tool_number],N_DECIMAL_SETTINGVALUE); break;
+      }
+    }
+    tool_val += 2;
   }
 }
 
@@ -297,7 +308,7 @@ void report_gcode_modes()
   } else { serial_write('9'); }
 
   printPgmString(PSTR(" T"));
-  print_uint8_base10(gc_state.tool);
+  print_uint8_base10(settings.tool);
 
   printPgmString(PSTR(" F"));
   printFloat_RateValue(gc_state.feed_rate);

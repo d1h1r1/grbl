@@ -15,7 +15,7 @@
 extern parser_block_t gc_block;
 extern uint8_t tool_status;
 
-parser_state_t gc_state;
+extern parser_state_t gc_state;
 // 初始化限位模块
 void limits_init();
 

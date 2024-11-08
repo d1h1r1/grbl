@@ -98,6 +98,13 @@ void settings_restore(uint8_t restore_flag) {
     settings.max_travel[X_AXIS] = (-DEFAULT_X_MAX_TRAVEL);
     settings.max_travel[Y_AXIS] = (-DEFAULT_Y_MAX_TRAVEL);
     settings.max_travel[Z_AXIS] = (-DEFAULT_Z_MAX_TRAVEL);
+    settings.tool = 0;
+    for (size_t i = 0; i < TOOL_NUM; i++)
+    {
+      settings.tool_x[i] = 0;
+      settings.tool_y[i] = 0;
+    }
+
 
 #ifdef A_AXIS
     settings.steps_per_mm[A_AXIS] = DEFAULT_A_STEPS_PER_MM;
@@ -203,7 +210,23 @@ uint8_t read_global_settings() {
 // 从命令行设置设置的辅助方法
 uint8_t settings_store_global_setting(uint8_t parameter, float value) {
   if (value < 0.0) { return(STATUS_NEGATIVE_VALUE); }
-  if (parameter >= AXIS_SETTINGS_START_VAL) {
+  if (parameter == TOOL_SETTINGS_START_VAL-1) {
+    // 储存刀号
+    settings.tool = value;
+  }else if (parameter >= TOOL_SETTINGS_START_VAL) {
+    // 储存刀坐标
+    parameter -= TOOL_SETTINGS_START_VAL; // 1 2 3 4 5 6
+    uint8_t index = parameter / 2;
+    uint8_t axis = parameter % 2;
+    switch (axis) {
+      case 0:
+        settings.tool_x[index] = value;
+        break;
+      case 1:
+        settings.tool_y[index] = value;
+        break;
+    }
+  }else if (parameter >= AXIS_SETTINGS_START_VAL) {
     // 存储轴配置。轴编号序列由 AXIS_SETTING 定义。
     // 注意：确保设置索引与 report.c 设置输出对应。
     parameter -= AXIS_SETTINGS_START_VAL;

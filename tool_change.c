@@ -35,6 +35,23 @@ void tool_loose(){
 }
 
 
+void change_tool(uint8_t tool_number){
+    printPgmString(PSTR("前刀号:"));
+    printInteger(settings.tool);
+    settings.tool = tool_number;
+    printPgmString(PSTR("后刀号:"));
+    printInteger(tool_number);
+    write_global_settings();  // 将更新后的刀号写入eeprom
+}
+
+void return_tool(){
+
+}
+
+void get_tool(){
+    
+}
+
 //  1松 0紧
 void tool_home(uint8_t flag)
 {

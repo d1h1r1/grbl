@@ -250,8 +250,8 @@ uint8_t gc_execute_line(char *line)
               }
               break;
             case 6:
-              // printPgmString(PSTR("\r\nM06自动换刀\r\n"));
-              break; 
+              printPgmString(PSTR("\r\nM06自动换刀\r\n"));
+              // break; 
             case 7: case 8: case 9:
               word_bit = MODAL_GROUP_M8; 
               switch(int_value) {      
@@ -303,9 +303,7 @@ uint8_t gc_execute_line(char *line)
             case 'S': word_bit = WORD_S; gc_block.values.s = value; break;
             case 'T': word_bit = WORD_T; 
               if (value > MAX_TOOL_NUMBER) { FAIL(STATUS_GCODE_MAX_VALUE_EXCEEDED); }
-              gc_block.values.t = int_value;
-              // printPgmString(PSTR("\r\n刀号\r\n"));
-              // printInteger(int_value);
+              change_tool(int_value);
               break;
             case 'X': word_bit = WORD_X; gc_block.values.xyz[X_AXIS] = value; axis_words |= (1<<X_AXIS); break;
             case 'Y': word_bit = WORD_Y; gc_block.values.xyz[Y_AXIS] = value; axis_words |= (1<<Y_AXIS); break;
@@ -862,7 +860,7 @@ uint8_t gc_execute_line(char *line)
   } // else { pl_data->spindle_speed = 0.0; } // 已初始化为零。
 
   // [5. 选择工具 ]: 不支持。仅跟踪工具值。
-  gc_state.tool = gc_block.values.t;
+  gc_state.tool = settings.tool;
 
   // [6. 更换工具 ]: 不支持
 
