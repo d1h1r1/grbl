@@ -1,8 +1,7 @@
 #include "grbl.h"
 
 uint8_t tool_status = 0;     // 0 松刀，1紧刀
-char command[50];
-unsigned char float_char[50];
+char x_char[20], y_char[20], command[80];
 void tool_home(uint8_t flag);
 
 void tool_tight(){
@@ -41,52 +40,35 @@ void return_tool(){
     printPgmString(PSTR("前刀号:"));
     printInteger(settings.tool);
     printPgmString(PSTR("\r\n"));
-    gc_block.values.xyz[2] = -1;
-    // printFloat_CoordValue(gc_block.values.xyz[0]);
-    // printFloat_CoordValue(gc_block.values.xyz[1]);
-    // printFloat_CoordValue(gc_block.values.xyz[2]);
-    float num = 3.14159;
-    char str[20];
-    gcvt(num, 6, str);  // 6表示有效数字位数
-    // gc_execute_line("G90G59G01Z-1F1000");
-    gc_execute_line("G90G59G01X" + settings.tool_x[settings.tool-1] + "Y" + settings.tool_y[settings.tool-1] + "F1000");
-    // printFloat_CoordValue(gc_block.values.xyz[0]);
-    // printFloat_CoordValue(gc_block.values.xyz[1]);
-    // printFloat_CoordValue(gc_block.values.xyz[2]);
-    // gc_execute_line("G90G59G01X100Y100F1000");
-    gc_block.values.xyz[2] = -5;
-    // printFloat_CoordValue(gc_block.values.xyz[0]);
-    // printFloat_CoordValue(gc_block.values.xyz[1]);
-    // printFloat_CoordValue(gc_block.values.xyz[2]);
-    // gc_execute_line("G90G59G01Z-5F1000");
-    // tool_home(1);
-    gc_block.values.xyz[2] = -1;
-    // printFloat_CoordValue(gc_block.values.xyz[0]);
-    // printFloat_CoordValue(gc_block.values.xyz[1]);
-    // printFloat_CoordValue(gc_block.values.xyz[2]);
-    // gc_execute_line("G90G59G01Z-1F1000");
+    // 抬刀
+    gc_execute_line("G90G59G01Z-1F1000");
+    // 移动到要还刀的xy位置
+    float2string(settings.tool_x[settings.tool-1], x_char, 3);
+    float2string(settings.tool_y[settings.tool-1], y_char, 3);
+    sprintf(command, "G90G59G01X%sY%sF1000", x_char, y_char);
+    gc_execute_line(command);
+    // 下降到还刀位置
+    gc_execute_line("G90G59G01Z-5F1000");
+    // 松刀
+    tool_home(1);
+    // 抬刀
+    gc_execute_line("G90G59G01Z-1F1000");
 }
 
 void get_tool(uint8_t tool_number){
-    gc_block.values.xyz[0] = settings.tool_x[settings.tool-1];
-    gc_block.values.xyz[1] = settings.tool_y[settings.tool-1];
-    // printFloat_CoordValue(gc_block.values.xyz[0]);
-    // printFloat_CoordValue(gc_block.values.xyz[1]);
-    // printFloat_CoordValue(gc_block.values.xyz[2]);
-
-    // gc_execute_line("G90G59G01X" + settings.tool_x[settings.tool-1] + "Y" + settings.tool_y[settings.tool-1] + "F1000");
-    // plan_buffer_line(gc_block.values.xyz, pl_data); // 绕过 mc_line()。直接计划回原点运动。
-    gc_block.values.xyz[2] = -5;
-    // printFloat_CoordValue(gc_block.values.xyz[0]);
-    // printFloat_CoordValue(gc_block.values.xyz[1]);
-    // printFloat_CoordValue(gc_block.values.xyz[2]);
-    // gc_execute_line("G90G59G01Z-5F1000");
-    // tool_home(0);
-    gc_block.values.xyz[2] = -1;
-    // printFloat_CoordValue(gc_block.values.xyz[0]);
-    // printFloat_CoordValue(gc_block.values.xyz[1]);
-    // printFloat_CoordValue(gc_block.values.xyz[2]);
-    // gc_execute_line("G90G59G01Z-1F1000");
+    // 移动取刀位置
+    float2string(settings.tool_x[tool_number-1], x_char, 3);
+    float2string(settings.tool_y[tool_number-1], y_char, 3);
+    sprintf(command, "G90G59G01X%sY%sF1000", x_char, y_char);
+    gc_execute_line(command);
+    // 下降到取刀位置
+    gc_execute_line("G90G59G01Z-5F1000");
+    // 紧刀
+    delay_ms(100);
+    tool_home(0);
+    // 抬刀
+    gc_execute_line("G90G59G01Z-1F1000");
+    // 将换完刀后刀号保存
     settings.tool = tool_number;
     write_global_settings();  // 将更新后的刀号写入eeprom
     printPgmString(PSTR("后刀号:"));
@@ -174,6 +156,7 @@ void tool_home(uint8_t flag)
     plan_buffer_line(target, pl_data); // 绕过 mc_line()。直接计划回原点运动。
 
     sys.step_control = STEP_CONTROL_EXECUTE_SYS_MOTION; // 设置为执行回原点运动并清除现有标志。
+    st_prep_buffer(); // 准备并填充段缓冲区，来源于新计划的块。
     st_wake_up(); // 启动运动
     do {
       if (approach) {
@@ -239,7 +222,7 @@ void tool_home(uint8_t flag)
 
   sys.step_control = STEP_CONTROL_NORMAL_OP; // 将步进控制返回到正常操作。
   protocol_execute_realtime(); // 检查重置并设置系统中止。
-  if (sys.abort) { return; } // 未完成。由 mc_alarm 设置的警报状态。
+  // if (sys.abort) { return; } // 未完成。由 mc_alarm 设置的警报状态。
   // 如果启用了硬限制功能，在归零循环后重新启用硬限制引脚更改寄存器。
   limits_init();
 }

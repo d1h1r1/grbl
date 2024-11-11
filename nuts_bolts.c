@@ -103,6 +103,50 @@ uint8_t read_float(char *line, uint8_t *char_counter, float *float_ptr)
   return(true);
 }
 
+void float2string(float fval, char *str, uint8_t precision) {
+    // 处理负数情况
+    bool isnegative = false;
+    if (fval < 0) {
+        isnegative = true;
+        fval = -fval;
+    }
+
+    // 计算整数部分
+    uint32_t intval = (uint32_t)fval;
+    float remainder = fval - intval;
+
+    // 将整数部分转换为字符串
+    char *ptr = str;
+    if (isnegative) {
+        *ptr++ = '-';
+    }
+
+    char temp[10];
+    char *temp_ptr = temp;
+    do {
+        *temp_ptr++ = (intval % 10) + '0';
+        intval /= 10;
+    } while (intval > 0);
+
+    // 将整数部分逆序存入结果字符串
+    while (temp_ptr != temp) {
+        *ptr++ = *--temp_ptr;
+    }
+
+    // 处理小数部分
+    if (precision > 0) {
+        *ptr++ = '.';  // 小数点
+        while (precision-- > 0) {
+            remainder *= 10;
+            int digit = (int)remainder;
+            *ptr++ = digit + '0';
+            remainder -= digit;
+        }
+    }
+
+    *ptr = '\0';  // 字符串结尾
+}
+
 // 非阻塞延迟函数，用于一般操作和挂起功能。
 void delay_sec(float seconds, uint8_t mode)
 {
