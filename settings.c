@@ -98,11 +98,11 @@ void settings_restore(uint8_t restore_flag) {
     settings.max_travel[X_AXIS] = (-DEFAULT_X_MAX_TRAVEL);
     settings.max_travel[Y_AXIS] = (-DEFAULT_Y_MAX_TRAVEL);
     settings.max_travel[Z_AXIS] = (-DEFAULT_Z_MAX_TRAVEL);
-    settings.tool = 0;
+    settings.tool = 1;
     for (size_t i = 0; i < TOOL_NUM; i++)
     {
-      settings.tool_x[i] = 0;
-      settings.tool_y[i] = 0;
+      settings.tool_x[i] = i*20 + 20;
+      settings.tool_y[i] = i*20 + 20;
     }
 
 
