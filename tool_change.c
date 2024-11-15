@@ -113,7 +113,7 @@ void tool_home(uint8_t flag)
     if (bit_istrue(cycle_mask,bit(idx))) {
       // 基于 max_travel 设置目标。确保限位开关在搜索倍增器的影响下被激活。
       // 注意：settings.max_travel[] 存储为负值。
-      max_travel = max(max_travel,(-1.5)*settings.max_travel[idx]);
+      max_travel = max(max_travel,(-3)*settings.max_travel[idx]);
     }
   }
 
@@ -210,7 +210,7 @@ void tool_home(uint8_t flag)
 
     // 在第一次循环后，回原点进入定位阶段。将搜索缩短至拉离距离。
     if (approach) {
-      max_travel = settings.homing_pulloff*5.0;
+      max_travel = settings.homing_pulloff*3.0;
       homing_rate = settings.homing_feed_rate;
     } else {
       max_travel = settings.homing_pulloff;
@@ -219,10 +219,17 @@ void tool_home(uint8_t flag)
 
   } while (n_cycle-- > 0);
 
-
+  sys_position[3] = 0;
   sys.step_control = STEP_CONTROL_NORMAL_OP; // 将步进控制返回到正常操作。
   protocol_execute_realtime(); // 检查重置并设置系统中止。
-  // if (sys.abort) { return; } // 未完成。由 mc_alarm 设置的警报状态。
-  // 如果启用了硬限制功能，在归零循环后重新启用硬限制引脚更改寄存器。
+  if (sys.abort) { return; } // 未完成。由 mc_alarm 设置的警报状态。
+
+  // 归零循环完成！设置系统以正常运行。
+  // -------------------------------------------------------------------------------------
+
+  // 同步 G-code 解析器和规划器位置到归零位置。
+  gc_sync_position();
+  plan_sync_position();
+  
   limits_init();
 }

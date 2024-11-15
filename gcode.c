@@ -229,7 +229,6 @@ uint8_t gc_execute_line(char *line)
 
 
         case 'M':
-
           // 确定 'M' 命令及其模式组
           if (mantissa > 0) { FAIL(STATUS_GCODE_COMMAND_VALUE_NOT_INTEGER); } // [不允许 Mxx.x 命令]
           switch(int_value) {
@@ -303,6 +302,8 @@ uint8_t gc_execute_line(char *line)
             case 'S': word_bit = WORD_S; gc_block.values.s = value; break;
             case 'T': word_bit = WORD_T; 
               if (value > MAX_TOOL_NUMBER) { FAIL(STATUS_GCODE_MAX_VALUE_EXCEEDED); }
+              // 如果刀号一样跳过换刀
+              if (int_value == settings.tool){ break; }
               change_tool(int_value);
               break;
             case 'X': word_bit = WORD_X; gc_block.values.xyz[X_AXIS] = value; axis_words |= (1<<X_AXIS); break;
