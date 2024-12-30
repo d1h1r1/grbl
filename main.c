@@ -79,6 +79,7 @@ int main(void)
     spindle_init();
     coolant_init();
     limits_init();
+    probe_control_init();
     probe_init();
     sleep_init();
     plan_reset(); // 清除块缓冲区和规划器变量
