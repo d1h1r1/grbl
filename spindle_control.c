@@ -22,7 +22,7 @@
 static float pwm_gradient; // 预先计算的值，用于加速转速到PWM的转换。
 
 void spindle_init()
-{    
+{
   // 配置可变主轴PWM和使能引脚（如需要）。
   SPINDLE_PWM_DDR |= (1<<SPINDLE_PWM_BIT); // 配置为PWM输出引脚。
   SPINDLE_TCCRA_REGISTER = SPINDLE_TCCRA_INIT_MASK; // 配置PWM输出比较定时器

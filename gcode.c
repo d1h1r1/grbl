@@ -229,6 +229,7 @@ uint8_t gc_execute_line(char *line)
 
 
         case 'M':
+
           // 确定 'M' 命令及其模式组
           if (mantissa > 0) { FAIL(STATUS_GCODE_COMMAND_VALUE_NOT_INTEGER); } // [不允许 Mxx.x 命令]
           switch(int_value) {
