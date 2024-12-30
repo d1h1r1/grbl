@@ -31,25 +31,27 @@
 #define STEP_DDR DDRA
 #define STEP_PORT PORTA
 #define STEP_PIN PINA
-#define X_STEP_BIT 2                                                                                                                      // MEGA2560 Digital Pin 24
-#define Y_STEP_BIT 3                                                                                                                      // MEGA2560 Digital Pin 25
-#define Z_STEP_BIT 4                                                                                                                      // MEGA2560 Digital Pin 26
-#define A_STEP_BIT 5                                                                                                                      // MEGA2560 Digital Pin 27
-#define B_STEP_BIT 6                                                                                                                      // MEGA2560 Digital Pin 28
-#define C_STEP_BIT 7                                                                                                                      // MEGA2560 Digital Pin 29
-#define STEP_MASK ((1 << X_STEP_BIT) | (1 << Y_STEP_BIT) | (1 << Z_STEP_BIT) | (1 << A_STEP_BIT) | (1 << B_STEP_BIT) | (1 << C_STEP_BIT)) // All step bits
+#define D_STEP_BIT 1                                                                                                                                          // MEGA2560 Digital Pin 23
+#define X_STEP_BIT 2                                                                                                                                          // MEGA2560 Digital Pin 24
+#define Y_STEP_BIT 3                                                                                                                                          // MEGA2560 Digital Pin 25
+#define Z_STEP_BIT 4                                                                                                                                          // MEGA2560 Digital Pin 26
+#define A_STEP_BIT 5                                                                                                                                          // MEGA2560 Digital Pin 27
+#define B_STEP_BIT 6                                                                                                                                          // MEGA2560 Digital Pin 28
+#define C_STEP_BIT 7                                                                                                                                          // MEGA2560 Digital Pin 29
+#define STEP_MASK ((1 << D_STEP_BIT) | (1 << X_STEP_BIT) | (1 << Y_STEP_BIT) | (1 << Z_STEP_BIT) | (1 << A_STEP_BIT) | (1 << B_STEP_BIT) | (1 << C_STEP_BIT)) // All step bits
 
 // 定义步进方向输出引脚。注意：所有方向引脚必须在同一端口上。
 #define DIRECTION_DDR DDRC
 #define DIRECTION_PORT PORTC
 #define DIRECTION_PIN PINC
-#define X_DIRECTION_BIT 7                                                                                                                                                    // MEGA2560 Digital Pin 30
-#define Y_DIRECTION_BIT 6                                                                                                                                                    // MEGA2560 Digital Pin 31
-#define Z_DIRECTION_BIT 5                                                                                                                                                    // MEGA2560 Digital Pin 32
-#define A_DIRECTION_BIT 4                                                                                                                                                    // MEGA2560 Digital Pin 33
-#define B_DIRECTION_BIT 3                                                                                                                                                    // MEGA2560 Digital Pin 34
-#define C_DIRECTION_BIT 2                                                                                                                                                    // MEGA2560 Digital Pin 35
-#define DIRECTION_MASK ((1 << X_DIRECTION_BIT) | (1 << Y_DIRECTION_BIT) | (1 << Z_DIRECTION_BIT) | (1 << A_DIRECTION_BIT) | (1 << B_DIRECTION_BIT) | (1 << C_DIRECTION_BIT)) // All direction bits
+#define X_DIRECTION_BIT 7                                                                                                                                                                             // MEGA2560 Digital Pin 30
+#define Y_DIRECTION_BIT 6                                                                                                                                                                             // MEGA2560 Digital Pin 31
+#define Z_DIRECTION_BIT 5                                                                                                                                                                             // MEGA2560 Digital Pin 32
+#define A_DIRECTION_BIT 4                                                                                                                                                                             // MEGA2560 Digital Pin 33
+#define B_DIRECTION_BIT 3                                                                                                                                                                             // MEGA2560 Digital Pin 34
+#define C_DIRECTION_BIT 2                                                                                                                                                                             // MEGA2560 Digital Pin 35
+#define D_DIRECTION_BIT 1                                                                                                                                                                             // MEGA2560 Digital Pin 36
+#define DIRECTION_MASK ((1 << X_DIRECTION_BIT) | (1 << Y_DIRECTION_BIT) | (1 << Z_DIRECTION_BIT) | (1 << A_DIRECTION_BIT) | (1 << B_DIRECTION_BIT) | (1 << C_DIRECTION_BIT) | (1 << D_DIRECTION_BIT)) // All direction bits
 
 // 定义步进驱动器启用/禁用输出引脚。
 #define STEPPERS_DISABLE_DDR DDRB
@@ -68,10 +70,11 @@
 #define A_LIMIT_BIT 0   // MEGA2560 Digital Pin 53
 #define B_LIMIT_BIT 1   // MEGA2560 Digital Pin 52
 #define C_LIMIT_BIT 2   // MEGA2560 Digital Pin 51
+#define D_LIMIT_BIT 3   // MEGA2560 Digital Pin 50
 #define LIMIT_INT PCIE0 // 引脚更改中断使能引脚
 #define LIMIT_INT_vect PCINT0_vect
-#define LIMIT_PCMSK PCMSK0                                                                                                                       // 引脚更改中断寄存器
-#define LIMIT_MASK ((1 << X_LIMIT_BIT) | (1 << Y_LIMIT_BIT) | (1 << Z_LIMIT_BIT) | (1 << A_LIMIT_BIT) | (1 << B_LIMIT_BIT) | (1 << C_LIMIT_BIT)) // All limit bits
+#define LIMIT_PCMSK PCMSK0                                                                                                                                            // 引脚更改中断寄存器
+#define LIMIT_MASK ((1 << X_LIMIT_BIT) | (1 << Y_LIMIT_BIT) | (1 << Z_LIMIT_BIT) | (1 << A_LIMIT_BIT) | (1 << B_LIMIT_BIT) | (1 << C_LIMIT_BIT) | (1 << D_LIMIT_BIT)) // All limit bits
 
 // 定义主轴启用和主轴方向输出引脚。
 #define SPINDLE_ENABLE_DDR DDRH
@@ -107,7 +110,7 @@
 #define PROBE_DDR DDRJ
 #define PROBE_PIN PINJ
 #define PROBE_PORT PORTJ
-#define PROBE_BIT 0 // MEGA2560 Analog Pin 15
+#define PROBE_BIT 0 // MEGA2560 Digital Pin 15
 #define PROBE_MASK (1 << PROBE_BIT)
 
 // 高级配置（下面的变量一般不需要修改）

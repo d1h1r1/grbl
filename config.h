@@ -18,8 +18,7 @@
 
 #ifndef config_h
 #define config_h
-#include "grbl.h"  // 为了与Arduino IDE的兼容性。
-
+#include "grbl.h" // 为了与Arduino IDE的兼容性。
 
 // 定义CPU引脚映射和默认设置。
 // 注意：OEM可以通过将其特定的默认值和引脚映射放在此文件的底部，避免维护/更新defaults.h和cpu_map.h文件，仅使用一个配置文件。
@@ -34,8 +33,8 @@
 #define BAUD_RATE 115200
 
 // 定义实时命令特殊字符。这些字符是直接从串行读取数据流中“挑选”出来的，且不会传递给grbl行执行解析器。
-//选择不在流式G代码程序中存在的字符，并且绝不能存在的字符。如果用户设置可用，可以使用ASCII控制字符。
-//此外，可以选择扩展ASCII代码（>127），这些代码在G代码程序中从不出现，用于接口程序。
+// 选择不在流式G代码程序中存在的字符，并且绝不能存在的字符。如果用户设置可用，可以使用ASCII控制字符。
+// 此外，可以选择扩展ASCII代码（>127），这些代码在G代码程序中从不出现，用于接口程序。
 // 注意：如果更改，请手动更新report.c中的帮助信息。
 
 #define CMD_RESET 0x18 // ctrl-x.
@@ -44,26 +43,26 @@
 #define CMD_FEED_HOLD '!'
 
 // 注意：所有覆盖的实时命令必须在扩展ASCII字符集中，从字符值128（0x80）开始，直到255（0xFF）。
-//如果将正常的实时命令，如状态报告、进给保持、复位和循环开始，
-//移动到扩展集空间，serial.c中的RX ISR将需要修改以适应该更改。
+// 如果将正常的实时命令，如状态报告、进给保持、复位和循环开始，
+// 移动到扩展集空间，serial.c中的RX ISR将需要修改以适应该更改。
 
 // #define CMD_RESET 0x80
 // #define CMD_STATUS_REPORT 0x81
 // #define CMD_CYCLE_START 0x82
 // #define CMD_FEED_HOLD 0x83
 #define CMD_SAFETY_DOOR 0x84
-#define CMD_JOG_CANCEL  0x85
-#define CMD_DEBUG_REPORT 0x86  // 仅在启用DEBUG时，发送调试报告，格式为'{}'。
-#define CMD_FEED_OVR_RESET 0x90          // 将进给倍率恢复为100%。
+#define CMD_JOG_CANCEL 0x85
+#define CMD_DEBUG_REPORT 0x86   // 仅在启用DEBUG时，发送调试报告，格式为'{}'。
+#define CMD_FEED_OVR_RESET 0x90 // 将进给倍率恢复为100%。
 #define CMD_FEED_OVR_COARSE_PLUS 0x91
 #define CMD_FEED_OVR_COARSE_MINUS 0x92
-#define CMD_FEED_OVR_FINE_PLUS  0x93
-#define CMD_FEED_OVR_FINE_MINUS  0x94
-#define CMD_RAPID_OVR_RESET 0x95         // 将快速倍率恢复为100%。
+#define CMD_FEED_OVR_FINE_PLUS 0x93
+#define CMD_FEED_OVR_FINE_MINUS 0x94
+#define CMD_RAPID_OVR_RESET 0x95 // 将快速倍率恢复为100%。
 #define CMD_RAPID_OVR_MEDIUM 0x96
 #define CMD_RAPID_OVR_LOW 0x97
 // #define CMD_RAPID_OVR_EXTRA_LOW 0x98  // *不支持*
-#define CMD_SPINDLE_OVR_RESET 0x99       // 将主轴倍率恢复为100%。
+#define CMD_SPINDLE_OVR_RESET 0x99 // 将主轴倍率恢复为100%。
 #define CMD_SPINDLE_OVR_COARSE_PLUS 0x9A
 #define CMD_SPINDLE_OVR_COARSE_MINUS 0x9B
 #define CMD_SPINDLE_OVR_FINE_PLUS 0x9C
@@ -73,9 +72,9 @@
 #define CMD_COOLANT_MIST_OVR_TOGGLE 0xA1
 
 // 如果启用了归位，归位初始化锁会在开机时将Grbl置于报警状态。这迫使用户在执行其他任何操作之前进行归位循环（或覆盖锁）。
-//这主要是一个安全特性，用于提醒用户进行归位，因为Grbl的位置信息是未知的。
+// 这主要是一个安全特性，用于提醒用户进行归位，因为Grbl的位置信息是未知的。
 
-#define HOMING_INIT_LOCK  // 注释以禁用
+#define HOMING_INIT_LOCK // 注释以禁用
 
 // 定义归位循环模式的位掩码。归位循环首先执行搜索模式，以快速接触限位开关，然后进入较慢的定位模式，最后进行短暂的回拉运动以脱离限位开关。
 // 以下HOMING_CYCLE_x定义按顺序执行，从后缀0开始，仅完成指定轴的归位例程。如果某个轴在定义中被省略，它将不会归位，也不会更新系统的位置。
@@ -85,8 +84,8 @@
 // 理论上，如果所有轴以单独的循环归位，所有轴的限位引脚可以减少到一个引脚，或者相反，所有三个轴在不同的引脚上，但在一个循环中归位。此外，需要注意的是，硬限位的功能不会受引脚共享的影响。
 // 注意：默认设置适用于传统的三轴CNC机器。首先清除Z轴，然后是X和Y。
 
-#define HOMING_CYCLE_0 (1<<Z_AXIS)                // 必须：首先移动Z轴以清除工作空间。
-#define HOMING_CYCLE_1 ((1<<X_AXIS)|(1<<Y_AXIS))  // 可选：然后同时移动X轴和Y轴。
+#define HOMING_CYCLE_0 (1 << Z_AXIS)                   // 必须：首先移动Z轴以清除工作空间。
+#define HOMING_CYCLE_1 ((1 << X_AXIS) | (1 << Y_AXIS)) // 可选：然后同时移动X轴和Y轴。
 // #define HOMING_CYCLE_2                         // 可选：取消注释并添加轴掩码以启用
 // #define HOMING_CYCLE_3                         // 可选：取消注释并添加轴掩码以启用
 // #define HOMING_CYCLE_4                         // 可选：取消注释并添加轴掩码以启用
@@ -98,8 +97,8 @@
 // #define HOMING_CYCLE_0 (1<<X_AXIS)  // 兼容COREXY：首先归位X
 // #define HOMING_CYCLE_1 (1<<Y_AXIS)  // 兼容COREXY：然后归位Y
 
- // 在机器最初移动到限位开关后执行的归位循环次数。
- // 这有助于防止超调，并应提高重复性。此值应为1或更大。
+// 在机器最初移动到限位开关后执行的归位循环次数。
+// 这有助于防止超调，并应提高重复性。此值应为1或更大。
 
 #define N_HOMING_LOCATE_CYCLE 1 // Integer (1-128)
 
@@ -110,10 +109,9 @@
 
 // 归位后，Grbl默认会将整个机器空间设置为负空间，这在专业CNC机器中很常见，无论限位开关位于何处。取消注释此定义以强制Grbl始终在归位位置设置机器原点，而不考虑开关的方向。
 
-#define HOMING_FORCE_SET_ORIGIN  // 取消注释以启用。
+#define HOMING_FORCE_SET_ORIGIN // 取消注释以启用。
 
 // Grbl启动时执行的块数。这些块存储在EEPROM中，大小和地址在settings.h中定义。根据当前设置，最多可以存储和按顺序执行2个启动块。这些启动块通常用于根据用户偏好设置G代码解析器的状态。
-
 
 #define N_STARTUP_LINE 2 // Integer (1-2)
 
@@ -121,13 +119,12 @@
 // 因此，通常不需要更改这些设置，但如果需要，您可以在这里进行更改。
 // 注意：必须是0到约4的整数值。超过4可能会出现舍入错误。
 
-
-#define N_DECIMAL_COORDVALUE_INCH 4  // 以英寸为单位的坐标或位置值
-#define N_DECIMAL_COORDVALUE_MM   3  // 以毫米为单位的坐标或位置值
-#define N_DECIMAL_RATEVALUE_INCH  1  // 以英寸/分钟为单位的速率或速度值
-#define N_DECIMAL_RATEVALUE_MM    0  // 以毫米/分钟为单位的速率或速度值
-#define N_DECIMAL_SETTINGVALUE    3  // 浮点设置值的小数位数
-#define N_DECIMAL_RPMVALUE        0  // 以每分钟转数（RPM）为单位的值
+#define N_DECIMAL_COORDVALUE_INCH 4 // 以英寸为单位的坐标或位置值
+#define N_DECIMAL_COORDVALUE_MM 3   // 以毫米为单位的坐标或位置值
+#define N_DECIMAL_RATEVALUE_INCH 1  // 以英寸/分钟为单位的速率或速度值
+#define N_DECIMAL_RATEVALUE_MM 0    // 以毫米/分钟为单位的速率或速度值
+#define N_DECIMAL_SETTINGVALUE 3    // 浮点设置值的小数位数
+#define N_DECIMAL_RPMVALUE 0        // 以每分钟转数（RPM）为单位的值
 
 // 如果您的机器有两个限位开关并联连接到一个轴，您需要启用此功能。由于两个开关共享一个引脚，Grbl无法判断哪个开关被启用。
 // 此选项仅影响归位，当限位被触发时，Grbl会发出报警并强制用户手动解除限位开关。否则，如果您每个轴都有一个限位开关，请不要启用此选项。
@@ -137,7 +134,7 @@
 
 // 在成功的探测循环后，此选项会通过自动生成的消息立即提供探测坐标的反馈。如果禁用，用户仍然可以通过Grbl的'$#'打印参数访问最后的探测坐标。
 
-#define MESSAGE_PROBE_COORDINATES  // 默认启用。注释以禁用。
+#define MESSAGE_PROBE_COORDINATES // 默认启用。注释以禁用。
 
 // 此选项使进给保持输入充当安全门开关。安全门触发时，会立即强制进给保持，然后安全地切断机器电源。恢复操作在安全门重新闭合之前被阻止。
 // 当安全门闭合时，Grbl将重新供电，并在先前的工具路径上恢复操作，就像什么都没发生过一样。
@@ -148,7 +145,6 @@
 
 #define SAFETY_DOOR_SPINDLE_DELAY 4.0 // Float (seconds)
 #define SAFETY_DOOR_COOLANT_DELAY 1.0 // Float (seconds)
-
 
 // 启用 CoreXY 运动学。仅与 CoreXY 机器一起使用。
 // 重要提示：如果启用了归位功能，您必须重新配置上面的归位循环 #defines 为
@@ -172,7 +168,6 @@
 // 注意：请不要使用此选项，除非您有必要的情况。
 
 // #define INVERT_LIMIT_PIN_MASK ((1<<X_LIMIT_BIT)|(1<<Y_LIMIT_BIT))  // 默认禁用。取消注释以启用。
-
 
 // 将主轴使能引脚的逻辑从低禁用/高启用反转为低启用/高禁用。
 // 对于某些预构建的电子板很有用。
@@ -201,28 +196,27 @@
 
 // ---------------------------------------------------------------------------------------
 // 高级配置选项：
-// 启用调试目的的代码。不是一般用途，并且始终处于不断变化中。 
+// 启用调试目的的代码。不是一般用途，并且始终处于不断变化中。
 // #define DEBUG // Uncomment to enable. Default disabled. // 取消注释以启用。默认禁用。
-
 
 // 配置快速、进给和主轴超速设置。这些值定义了最大和最小允许的超速值以及每个命令接收的粗细增量。请注意描述中允许的值。
 
-#define DEFAULT_FEED_OVERRIDE           100 // 100%。请勿更改此值。
-#define MAX_FEED_RATE_OVERRIDE          200 // 程序进给速率的百分比（100-255）。通常为120%或200%。
-#define MIN_FEED_RATE_OVERRIDE           10 // 程序进给速率的百分比（1-100）。通常为50%或1%。
-#define FEED_OVERRIDE_COARSE_INCREMENT   10 // (1-99)。通常为10%。
-#define FEED_OVERRIDE_FINE_INCREMENT      1 // (1-99)。通常为1%。
+#define DEFAULT_FEED_OVERRIDE 100         // 100%。请勿更改此值。
+#define MAX_FEED_RATE_OVERRIDE 200        // 程序进给速率的百分比（100-255）。通常为120%或200%。
+#define MIN_FEED_RATE_OVERRIDE 10         // 程序进给速率的百分比（1-100）。通常为50%或1%。
+#define FEED_OVERRIDE_COARSE_INCREMENT 10 // (1-99)。通常为10%。
+#define FEED_OVERRIDE_FINE_INCREMENT 1    // (1-99)。通常为1%。
 
-#define DEFAULT_RAPID_OVERRIDE  100 // 100%。请勿更改此值。
-#define RAPID_OVERRIDE_MEDIUM    50 // 快速进给的百分比（1-99）。通常为50%。
-#define RAPID_OVERRIDE_LOW       25 // 快速进给的百分比（1-99）。通常为25%。
+#define DEFAULT_RAPID_OVERRIDE 100 // 100%。请勿更改此值。
+#define RAPID_OVERRIDE_MEDIUM 50   // 快速进给的百分比（1-99）。通常为50%。
+#define RAPID_OVERRIDE_LOW 25      // 快速进给的百分比（1-99）。通常为25%。
 // #define RAPID_OVERRIDE_EXTRA_LOW 5 // *不支持* 快速进给的百分比（1-99）。通常为5%。
 
-#define DEFAULT_SPINDLE_SPEED_OVERRIDE    100 // 100%。请勿更改此值。
-#define MAX_SPINDLE_SPEED_OVERRIDE        200 // 程序主轴转速的百分比（100-255）。通常为200%。
-#define MIN_SPINDLE_SPEED_OVERRIDE         10 // 程序主轴转速的百分比（1-100）。通常为10%。
-#define SPINDLE_OVERRIDE_COARSE_INCREMENT  10 // (1-99)。通常为10%。
-#define SPINDLE_OVERRIDE_FINE_INCREMENT     1 // (1-99)。通常为1%。
+#define DEFAULT_SPINDLE_SPEED_OVERRIDE 100   // 100%。请勿更改此值。
+#define MAX_SPINDLE_SPEED_OVERRIDE 200       // 程序主轴转速的百分比（100-255）。通常为200%。
+#define MIN_SPINDLE_SPEED_OVERRIDE 10        // 程序主轴转速的百分比（1-100）。通常为10%。
+#define SPINDLE_OVERRIDE_COARSE_INCREMENT 10 // (1-99)。通常为10%。
+#define SPINDLE_OVERRIDE_FINE_INCREMENT 1    // (1-99)。通常为1%。
 
 // 当执行M2或M30程序结束命令时，大多数G代码状态会恢复为默认值。
 // 此编译时选项包括在程序结束时将进给、快速和主轴转速覆盖值恢复为其默认值。
@@ -233,12 +227,12 @@
 // 新报告样式的效率提高允许在没有潜在性能问题的情况下发送所有数据字段。
 // 注意：以下选项仅在特殊情况下提供禁用某些数据字段的方法，但请注意GUI可能依赖于这些数据。
 // 如果禁用，可能会导致不兼容。
-#define REPORT_FIELD_BUFFER_STATE // 默认启用。注释以禁用。
-#define REPORT_FIELD_PIN_STATE // 默认启用。注释以禁用。
+#define REPORT_FIELD_BUFFER_STATE       // 默认启用。注释以禁用。
+#define REPORT_FIELD_PIN_STATE          // 默认启用。注释以禁用。
 #define REPORT_FIELD_CURRENT_FEED_SPEED // 默认启用。注释以禁用。
-#define REPORT_FIELD_WORK_COORD_OFFSET // 默认启用。注释以禁用。
-#define REPORT_FIELD_OVERRIDES // 默认启用。注释以禁用。
-#define REPORT_FIELD_LINE_NUMBERS // 默认启用。注释以禁用。
+#define REPORT_FIELD_WORK_COORD_OFFSET  // 默认启用。注释以禁用。
+#define REPORT_FIELD_OVERRIDES          // 默认启用。注释以禁用。
+#define REPORT_FIELD_LINE_NUMBERS       // 默认启用。注释以禁用。
 
 // 一些状态报告数据对于实时情况并不必要，仅间歇性需要，因为值不经常变化。
 // 以下宏配置状态报告调用多少次后刷新相关数据并包含在状态报告中。
@@ -247,10 +241,10 @@
 // 还有忙碌和空闲刷新计数，这使Grbl在不做重要事情时更频繁地发送刷新。
 // 对于良好的GUI，此数据不需要经常刷新，通常在几秒钟内。
 // 注意：WCO刷新必须为2或更大。OVR刷新必须为1或更大。
-#define REPORT_OVR_REFRESH_BUSY_COUNT 20  // (1-255)
-#define REPORT_OVR_REFRESH_IDLE_COUNT 10  // (1-255) 必须小于或等于忙碌计数
-#define REPORT_WCO_REFRESH_BUSY_COUNT 30  // (2-255)
-#define REPORT_WCO_REFRESH_IDLE_COUNT 10  // (2-255) 必须小于或等于忙碌计数
+#define REPORT_OVR_REFRESH_BUSY_COUNT 20 // (1-255)
+#define REPORT_OVR_REFRESH_IDLE_COUNT 10 // (1-255) 必须小于或等于忙碌计数
+#define REPORT_WCO_REFRESH_BUSY_COUNT 30 // (2-255)
+#define REPORT_WCO_REFRESH_IDLE_COUNT 10 // (2-255) 必须小于或等于忙碌计数
 
 // 加速度管理子系统的时间分辨率。较高的数值提供更平滑的加速度，
 // 在以非常高的进给率运行的机器上特别明显，但可能会对性能产生负面影响。
@@ -265,7 +259,7 @@
 // 平滑多轴运动的步进。在低步进频率（10kHz以下）时，此功能能够特别平滑运动，
 // 其中多轴运动的混叠可能会导致可听噪声并使机器抖动。甚至在更低的步进频率下，AMASS自适应并提供更好的步进平滑。
 // 有关AMASS系统工作原理的更多细节，请参见stepper.c。
-#define ADAPTIVE_MULTI_AXIS_STEP_SMOOTHING  // 默认启用。注释以禁用。
+#define ADAPTIVE_MULTI_AXIS_STEP_SMOOTHING // 默认启用。注释以禁用。
 
 // 设置作为Grbl设置写入的最大步进速率。此选项在设置模块中启用错误检查，
 // 以防止超出此限制的设置值。最大步进速率严格受CPU速度限制，
@@ -284,9 +278,9 @@
 // 其中反转设置现在意味着用户应连接常开开关，反之亦然。
 // 注意：与此功能相关的所有引脚都被禁用，即XYZ限制引脚，而不是单个轴。
 // 警告：禁用上拉电阻后，需要额外的接线和下拉电阻！
-//#define DISABLE_LIMIT_PIN_PULL_UP
-//#define DISABLE_PROBE_PIN_PULL_UP
-//#define DISABLE_CONTROL_PIN_PULL_UP
+// #define DISABLE_LIMIT_PIN_PULL_UP
+// #define DISABLE_PROBE_PIN_PULL_UP
+// #define DISABLE_CONTROL_PIN_PULL_UP
 
 // 设置工具长度偏移应用于哪个轴。假设主轴始终与所选轴平行，
 // 工具朝向负方向。换句话说，正的工具长度偏移值将从当前位置减去。
@@ -346,7 +340,6 @@
 // 例如状态报告，因为这些操作在每个停留时间步骤之间执行。
 // 还要记住，Arduino延迟计时器对于长延迟并不非常准确。
 #define DWELL_TIME_STEP 50 // 整数（1-255）（毫秒）
-
 
 // 创建方向引脚设置与相应步进脉冲之间的延迟，
 // 通过创建另一个中断（Timer2 比较）来管理它。
@@ -447,7 +440,6 @@
 #define ENABLE_RESTORE_EEPROM_DEFAULT_SETTINGS // '$RST=$' 默认启用。注释以禁用。
 #define ENABLE_RESTORE_EEPROM_CLEAR_PARAMETERS // '$RST=#' 默认启用。注释以禁用。
 
-
 // 定义在设置版本更改和 `$RST=*` 命令时恢复的 EEPROM 数据。
 // 每当设置或其他 EEPROM 数据结构在 Grbl 版本之间发生变化时，Grbl 将自动清除并恢复 EEPROM。
 // 此宏控制清除和恢复哪些数据。这对于需要保留某些数据的 OEM 特别有用。
@@ -507,14 +499,14 @@
 // #define PARKING_ENABLE  // 默认禁用。取消注释以启用
 
 // 如果启用，配置停车运动的选项。
-#define PARKING_AXIS Z_AXIS // 定义执行停车运动的轴
-#define PARKING_TARGET -5.0 // 停车轴目标。以 mm 为单位，作为机器坐标 [-max_travel,0]。
-#define PARKING_RATE 500.0 // 拉出后停车的快速速率，单位为 mm/min。
-#define PARKING_PULLOUT_RATE 100.0 // 拉出/冲击的慢进给速率，单位为 mm/min。
+#define PARKING_AXIS Z_AXIS           // 定义执行停车运动的轴
+#define PARKING_TARGET -5.0           // 停车轴目标。以 mm 为单位，作为机器坐标 [-max_travel,0]。
+#define PARKING_RATE 500.0            // 拉出后停车的快速速率，单位为 mm/min。
+#define PARKING_PULLOUT_RATE 100.0    // 拉出/冲击的慢进给速率，单位为 mm/min。
 #define PARKING_PULLOUT_INCREMENT 5.0 // 主轴拉出和冲击距离，单位为 mm。增量距离。
 // 必须为正值或等于零。
 
-// 启用并配置 Grbl 的睡眠模式功能。如果主轴或冷却液被供电且 Grbl 
+// 启用并配置 Grbl 的睡眠模式功能。如果主轴或冷却液被供电且 Grbl
 // 不在主动移动或接收任何命令，睡眠计时器将开始。如果收到任何数据或命令，
 // 睡眠计时器将重置并重新启动，直到上述条件不再满足。
 // 如果睡眠计时器到期，Grbl 将立即执行睡眠模式，通过关闭主轴
@@ -541,7 +533,5 @@
 // 在此处粘贴 CPU_MAP 定义。
 
 // 在此处粘贴 defaults.h 定义。
-
-
 
 #endif

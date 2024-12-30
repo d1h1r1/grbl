@@ -18,10 +18,8 @@
 
 #include "grbl.h"
 
-
 // 声明系统全局变量结构
 system_t sys;
-
 
 int main(void)
 {
@@ -32,38 +30,42 @@ int main(void)
   system_init();   // 配置引脚引脚和引脚变更中断
 
   memset(sys_position, 0, sizeof(sys_position)); // 清除机器位置。
-  sei(); // 启用中断
+  sei();                                         // 启用中断
 
-  // 初始化系统状态。
-  #ifdef FORCE_INITIALIZATION_ALARM
-    // 在电源循环或硬重置时强制 Grbl 进入 ALARM 状态。
+// 初始化系统状态。
+#ifdef FORCE_INITIALIZATION_ALARM
+         // 在电源循环或硬重置时强制 Grbl 进入 ALARM 状态。
+  sys.state = STATE_ALARM;
+#else
+  sys.state = STATE_IDLE;
+#endif
+
+// 检查上电并设置系统警报，如果启用了归位，则强制归位周期
+// 通过设置 Grbl 的警报状态。警报锁定所有 G-code 命令，包括
+// 启动脚本，但允许访问设置和内部命令。只有归位
+// 周期 '$H' 或解除警报锁 '$X' 将禁用警报。
+// 注意：启动脚本将在归位周期成功完成后运行，但
+// 不会在解除警报锁后运行。防止运动启动块失控地撞击物体。
+// 非常糟糕。
+#ifdef HOMING_INIT_LOCK
+  if (bit_istrue(settings.flags, BITFLAG_HOMING_ENABLE))
+  {
     sys.state = STATE_ALARM;
-  #else
-    sys.state = STATE_IDLE;
-  #endif
-  
-  // 检查上电并设置系统警报，如果启用了归位，则强制归位周期
-  // 通过设置 Grbl 的警报状态。警报锁定所有 G-code 命令，包括
-  // 启动脚本，但允许访问设置和内部命令。只有归位
-  // 周期 '$H' 或解除警报锁 '$X' 将禁用警报。
-  // 注意：启动脚本将在归位周期成功完成后运行，但
-  // 不会在解除警报锁后运行。防止运动启动块失控地撞击物体。
-  // 非常糟糕。
-  #ifdef HOMING_INIT_LOCK
-    if (bit_istrue(settings.flags, BITFLAG_HOMING_ENABLE)) { sys.state = STATE_ALARM; }
-  #endif
+  }
+#endif
 
   // Grbl 在上电或系统中止时的初始化循环。对于后者，所有进程
   // 将返回到此循环以进行干净的重新初始化。
-  for(;;) {
+  for (;;)
+  {
 
     // 重置系统变量。
     uint8_t prior_state = sys.state;
     memset(&sys, 0, sizeof(system_t)); // 清除系统结构变量。
     sys.state = prior_state;
-    sys.f_override = DEFAULT_FEED_OVERRIDE;  // 设置为 100%
-    sys.r_override = DEFAULT_RAPID_OVERRIDE; // 设置为 100%
-    sys.spindle_speed_ovr = DEFAULT_SPINDLE_SPEED_OVERRIDE; // 设置为 100%
+    sys.f_override = DEFAULT_FEED_OVERRIDE;                    // 设置为 100%
+    sys.r_override = DEFAULT_RAPID_OVERRIDE;                   // 设置为 100%
+    sys.spindle_speed_ovr = DEFAULT_SPINDLE_SPEED_OVERRIDE;    // 设置为 100%
     memset(sys_probe_position, 0, sizeof(sys_probe_position)); // 清除探测位置。
     sys_probe_state = 0;
     sys_rt_exec_state = 0;
@@ -73,25 +75,27 @@ int main(void)
 
     // 重置 Grbl 主要系统。
     serial_reset_read_buffer(); // 清除串行读取缓冲区
-    gc_init(); // 将 G-code 解析器设置为默认状态
+    gc_init();                  // 将 G-code 解析器设置为默认状态
     spindle_init();
     coolant_init();
     limits_init();
     probe_init();
     sleep_init();
     plan_reset(); // 清除块缓冲区和规划器变量
-    st_reset(); // 清除步进电机子系统变量。
+    st_reset();   // 清除步进电机子系统变量。
 
     // 将清除的 G-code 和规划器位置同步到当前系统位置。
     plan_sync_position();
     gc_sync_position();
-
+    // print_uint8_base2_ndigit(8, limits_get_state());
+    // printString("\n");
+    // delay_ms(1);
+    // continue;
     // 打印欢迎消息。指示在上电或重置时发生了初始化。
     report_init_message();
-    
+
     // 启动 Grbl 主循环。处理程序输入并执行它们。
     protocol_main_loop();
-
   }
-  return 0;   /* 永远不会到达 */
+  return 0; /* 永远不会到达 */
 }

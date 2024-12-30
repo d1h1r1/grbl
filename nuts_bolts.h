@@ -26,43 +26,44 @@
 #define SOME_LARGE_VALUE 1.0E+38
 
 // 轴数组索引值。必须从 0 开始并连续。
-#define N_AXIS 4 // 轴的数量
+#define N_AXIS 7 // 轴的数量
 #define X_AXIS 0 // 轴索引值。
 #define Y_AXIS 1
 #define Z_AXIS 2
 #define A_AXIS 3
-//#define B_AXIS 4
-//#define C_AXIS 5
+#define B_AXIS 4
+#define C_AXIS 5
+#define D_AXIS 6
 
 // CoreXY 电机分配。请勿更改。
 // 注意：如果更改了 A 和 B 电机轴的绑定，会影响 CoreXY 方程。
 #ifdef COREXY
- #define A_MOTOR X_AXIS // 必须是 X_AXIS
- #define B_MOTOR Y_AXIS // 必须是 Y_AXIS
+#define A_MOTOR X_AXIS // 必须是 X_AXIS
+#define B_MOTOR Y_AXIS // 必须是 Y_AXIS
 #endif
 
 // 转换
 #define MM_PER_INCH (25.40)
 #define INCH_PER_MM (0.0393701)
-#define TICKS_PER_MICROSECOND (F_CPU/1000000)
+#define TICKS_PER_MICROSECOND (F_CPU / 1000000)
 
-#define DELAY_MODE_DWELL       0
+#define DELAY_MODE_DWELL 0
 #define DELAY_MODE_SYS_SUSPEND 1
 
 // 有用的宏
 #define clear_vector(a) memset(a, 0, sizeof(a))
-#define clear_vector_float(a) memset(a, 0.0, sizeof(float)*N_AXIS)
+#define clear_vector_float(a) memset(a, 0.0, sizeof(float) * N_AXIS)
 // #define clear_vector_long(a) memset(a, 0.0, sizeof(long)*N_AXIS)
-#define max(a,b) (((a) > (b)) ? (a) : (b))
-#define min(a,b) (((a) < (b)) ? (a) : (b))
-#define isequal_position_vector(a,b) !(memcmp(a, b, sizeof(float)*N_AXIS))
+#define max(a, b) (((a) > (b)) ? (a) : (b))
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+#define isequal_position_vector(a, b) !(memcmp(a, b, sizeof(float) * N_AXIS))
 
 // 位域和掩码宏
 #define bit(n) (1 << n)
-#define bit_true(x,mask) (x) |= (mask)
-#define bit_false(x,mask) (x) &= ~(mask)
-#define bit_istrue(x,mask) ((x & mask) != 0)
-#define bit_isfalse(x,mask) ((x & mask) == 0)
+#define bit_true(x, mask) (x) |= (mask)
+#define bit_false(x, mask) (x) &= ~(mask)
+#define bit_istrue(x, mask) ((x & mask) != 0)
+#define bit_isfalse(x, mask) ((x & mask) == 0)
 
 // 从字符串读取浮点值。line 指向输入缓冲区，char_counter
 // 是指向行中当前字符的索引器，而 float_ptr 是

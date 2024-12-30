@@ -136,7 +136,6 @@ void tool_home(uint8_t flag)
   uint8_t limit_state, axislock, n_active_axis;
   do
   {
-
     system_convert_array_steps_to_mpos(target, sys_position);
 
     // 初始化并声明回原点例程所需的变量。
