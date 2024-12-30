@@ -1,64 +1,18 @@
 #include "grbl.h"
 
-void close_all_relay()
-{
-    PORTL &= ~((1 << 2) | (1 << 3));
-}
-
-void open_all_relay()
-{
-    PORTL |= ~((1 << 2) | (1 << 3));
-}
-
-void probe_control_init()
+void laser_control_init()
 {
     // 限位
-    DDRL &= ~((1 << 1) | 1); // 设置为输入引脚
-    PORTL |= ((1 << 1) | 1); // 启用内部上拉电阻。正常高操作。
-    // 输出控制
-    DDRL |= ((1 << 2) | (1 << 3));  // 将其配置为输出引脚。
-    PORTL |= ((1 << 2) | (1 << 3)); // 启用内部上拉电阻。正常高操作。
-    close_all_relay();
-}
-
-void up_relay(uint8_t flag)
-{
-    if (flag)
-    {
-        PORTL |= (1 << 2);
-    }
-    else
-    {
-        PORTL &= (1 << 2);
-    }
-}
-
-void down_relay(uint8_t flag)
-{
-    if (flag)
-    {
-        PORTL |= (1 << 3);
-    }
-    else
-    {
-        PORTL &= (1 << 3);
-    }
+    DDRL &= ~((1 << 4) | (1 << 5)); // 设置为输入引脚
+    PORTL |= ((1 << 4) | (1 << 5)); // 启用内部上拉电阻。正常高操作。
 }
 
 //  1上 0下
-void set_probe(uint8_t flag)
+void set_laser(uint8_t flag)
 {
-    if (flag)
-    {
-        up_relay(0);
-    }
-    else
-    {
-        down_relay(0);
-    }
     protocol_buffer_synchronize();
-    uint8_t cycle_mask = 1 << C_AXIS;
-    uint8_t idx = 5;
+    uint8_t cycle_mask = 1 << D_AXIS;
+    uint8_t idx = 6;
     if (sys.abort)
     {
         return;
@@ -126,25 +80,17 @@ void set_probe(uint8_t flag)
         // 检查限位状态。当它们发生变化时锁定循环轴。
         if (flag)
         {
-            limit_state = PINL & 1;
+            limit_state = PINL & (1 << 4);
         }
         else
         {
-            limit_state = PINL & (1 << 1);
+            limit_state = PINL & (1 << 5);
         }
         if (axislock & step_pin[idx])
         {
             if (limit_state)
             {
                 axislock &= ~(step_pin[idx]);
-                if (flag)
-                {
-                    up_relay(1);
-                }
-                else
-                {
-                    down_relay(1);
-                }
             }
         }
 

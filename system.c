@@ -148,6 +148,12 @@ uint8_t system_execute_line(char *line)
   case 'V':
     set_probe(0);
     break;
+  case 'A':
+    set_laser(0);
+    break;
+  case 'B':
+    set_laser(1);
+    break;
   case 'J': // 手动移动
     // 仅在 IDLE 或 JOG 状态下执行。
     if (sys.state != STATE_IDLE && sys.state != STATE_JOG)
