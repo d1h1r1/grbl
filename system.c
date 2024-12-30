@@ -113,8 +113,8 @@ uint8_t system_execute_line(char *line)
   float parameter, value;
   switch( line[char_counter] ) {
     case 0 : report_grbl_help(); break; // 显示 Grbl 帮助
-    case 'D' : tool_home(1); break; // 显示 Grbl 帮助
-    case 'U' : tool_home(0); break; // 显示 Grbl 帮助
+    case 'D' : tool_home(1); break; // 松刀
+    case 'U' : tool_home(0); break; // 紧刀
     case 'J' : // 手动移动
       // 仅在 IDLE 或 JOG 状态下执行。
       if (sys.state != STATE_IDLE && sys.state != STATE_JOG) { return(STATUS_IDLE_ERROR); }

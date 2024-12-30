@@ -4,39 +4,39 @@ uint8_t tool_status = 0; // 0 松刀，1紧刀
 char x_char[20], y_char[20], command[80];
 void tool_home(uint8_t flag);
 
-void tool_tight()
-{
-  tool_status = 1;
-  printString("上紧:");
-  plan_line_data_t plan_data;
-  plan_line_data_t *pl_data = &plan_data;
-  memset(pl_data, 0, sizeof(plan_line_data_t));
-  pl_data->condition |= PL_COND_FLAG_RAPID_MOTION;
-  pl_data->line_number = HOMING_CYCLE_LINE_NUMBER;
-  pl_data->feed_rate = 100; // 设置当前回原点速率。
-  gc_block.values.xyz[3] += 5;
-  plan_buffer_line(gc_block.values.xyz, pl_data); // 绕过 mc_line()。直接计划回原点运动。
-                                                  // st_prep_buffer(); // 准备并填充段缓冲区，来源于新计划的块。
-                                                  // st_wake_up(); // 启动运动
-                                                  // memcpy(gc_state.position, gc_block.values.xyz, sizeof(gc_block.values.xyz));     // 将运动后的信息更新到全局坐标中
-}
+// void tool_tight()
+// {
+//   tool_status = 1;
+//   printString("上紧:");
+//   plan_line_data_t plan_data;
+//   plan_line_data_t *pl_data = &plan_data;
+//   memset(pl_data, 0, sizeof(plan_line_data_t));
+//   pl_data->condition |= PL_COND_FLAG_RAPID_MOTION;
+//   pl_data->line_number = HOMING_CYCLE_LINE_NUMBER;
+//   pl_data->feed_rate = 100; // 设置当前回原点速率。
+//   gc_block.values.xyz[3] += 5;
+//   plan_buffer_line(gc_block.values.xyz, pl_data); // 绕过 mc_line()。直接计划回原点运动。
+//                                                   // st_prep_buffer(); // 准备并填充段缓冲区，来源于新计划的块。
+//                                                   // st_wake_up(); // 启动运动
+//                                                   // memcpy(gc_state.position, gc_block.values.xyz, sizeof(gc_block.values.xyz));     // 将运动后的信息更新到全局坐标中
+// }
 
-void tool_loose()
-{
-  tool_status = 0;
-  printString("下松:");
-  plan_line_data_t plan_data;
-  plan_line_data_t *pl_data = &plan_data;
-  memset(pl_data, 0, sizeof(plan_line_data_t));
-  pl_data->condition |= PL_COND_FLAG_RAPID_MOTION;
-  pl_data->line_number = HOMING_CYCLE_LINE_NUMBER;
-  pl_data->feed_rate = 10; // 设置当前回原点速率。
-  gc_block.values.xyz[3] -= 5;
-  plan_buffer_line(gc_block.values.xyz, pl_data); // 绕过 mc_line()。直接计划回原点运动。
-                                                  // st_prep_buffer(); // 准备并填充段缓冲区，来源于新计划的块。
-                                                  // st_wake_up(); // 启动运动
-                                                  // memcpy(gc_state.position, gc_block.values.xyz, sizeof(gc_block.values.xyz));     // 将运动后的信息更新到全局坐标中
-}
+// void tool_loose()
+// {
+//   tool_status = 0;
+//   printString("下松:");
+//   plan_line_data_t plan_data;
+//   plan_line_data_t *pl_data = &plan_data;
+//   memset(pl_data, 0, sizeof(plan_line_data_t));
+//   pl_data->condition |= PL_COND_FLAG_RAPID_MOTION;
+//   pl_data->line_number = HOMING_CYCLE_LINE_NUMBER;
+//   pl_data->feed_rate = 10; // 设置当前回原点速率。
+//   gc_block.values.xyz[3] -= 5;
+//   plan_buffer_line(gc_block.values.xyz, pl_data); // 绕过 mc_line()。直接计划回原点运动。
+//                                                   // st_prep_buffer(); // 准备并填充段缓冲区，来源于新计划的块。
+//                                                   // st_wake_up(); // 启动运动
+//                                                   // memcpy(gc_state.position, gc_block.values.xyz, sizeof(gc_block.values.xyz));     // 将运动后的信息更新到全局坐标中
+// }
 
 void return_tool()
 {
@@ -91,7 +91,8 @@ void tool_home(uint8_t flag)
 {
   protocol_buffer_synchronize();
   limits_disable();
-  uint8_t cycle_mask = 1 << A_AXIS;
+  uint8_t cycle_mask = 1 << B_AXIS;
+  uint8_t idx = 4;
   if (sys.abort)
   {
     return;
@@ -109,26 +110,15 @@ void tool_home(uint8_t flag)
   uint8_t step_pin[N_AXIS];
   float target[N_AXIS];
   float max_travel = 0.0;
-  uint8_t idx;
-  for (idx = 0; idx < N_AXIS; idx++)
+  // 初始化步进引脚掩码
+  step_pin[idx] = get_step_pin_mask(idx);
+  if (bit_istrue(cycle_mask, bit(idx)))
   {
-    // 初始化步进引脚掩码
-    step_pin[idx] = get_step_pin_mask(idx);
-#ifdef COREXY
-    if ((idx == A_MOTOR) || (idx == B_MOTOR))
-    {
-      step_pin[idx] = (get_step_pin_mask(X_AXIS) | get_step_pin_mask(Y_AXIS));
-    }
-#endif
-
-    if (bit_istrue(cycle_mask, bit(idx)))
-    {
-      // 基于 max_travel 设置目标。确保限位开关在搜索倍增器的影响下被激活。
-      // 注意：settings.max_travel[] 存储为负值。
-      max_travel = max(max_travel, (-3) * settings.max_travel[idx]);
-    }
+    // 基于 max_travel 设置目标。确保限位开关在搜索倍增器的影响下被激活。
+    // 注意：settings.max_travel[] 存储为负值。
+    max_travel = max(max_travel, (-3) * settings.max_travel[idx]);
   }
-
+  
   // 设置搜索模式，以接近速率快速激活指定的 cycle_mask 限位开关。
   bool approach = true;
   float homing_rate = settings.homing_seek_rate;
@@ -141,40 +131,37 @@ void tool_home(uint8_t flag)
     // 初始化并声明回原点例程所需的变量。
     axislock = 0;
     n_active_axis = 0;
-    for (idx = 0; idx < N_AXIS; idx++)
+    // 为活动轴设置目标位置并设置回原点速率的计算。
+    if (bit_istrue(cycle_mask, bit(idx)))
     {
-      // 为活动轴设置目标位置并设置回原点速率的计算。
-      if (bit_istrue(cycle_mask, bit(idx)))
+      n_active_axis++;
+      sys_position[idx] = 0;
+      // 根据循环掩码和回原点循环接近状态设置目标方向。
+      // 注意：这样编译出来的代码比尝试过的任何其他实现都要小。
+      if (flag)
       {
-        n_active_axis++;
-        sys_position[idx] = 0;
-        // 根据循环掩码和回原点循环接近状态设置目标方向。
-        // 注意：这样编译出来的代码比尝试过的任何其他实现都要小。
-        if (flag)
+        if (approach)
         {
-          if (approach)
-          {
-            target[idx] = -max_travel;
-          }
-          else
-          {
-            target[idx] = max_travel;
-          }
+          target[idx] = -max_travel;
         }
         else
         {
-          if (approach)
-          {
-            target[idx] = max_travel;
-          }
-          else
-          {
-            target[idx] = -max_travel;
-          }
+          target[idx] = max_travel;
         }
-        // 将轴锁应用于本循环中活动的步进端口引脚。
-        axislock |= step_pin[idx];
       }
+      else
+      {
+        if (approach)
+        {
+          target[idx] = max_travel;
+        }
+        else
+        {
+          target[idx] = -max_travel;
+        }
+      }
+      // 将轴锁应用于本循环中活动的步进端口引脚。
+      axislock |= step_pin[idx];
     }
     homing_rate *= sqrt(n_active_axis); // [sqrt(N_AXIS)] 调整以便每个轴都以回原点速率移动。
     sys.homing_axis_lock = axislock;
@@ -192,30 +179,16 @@ void tool_home(uint8_t flag)
       {
         // 检查限位状态。当它们发生变化时锁定循环轴。
         limit_state = limits_get_state();
-        for (idx = 0; idx < N_AXIS; idx++)
+        if (axislock & step_pin[idx])
         {
-          if (axislock & step_pin[idx])
+          if (limit_state & (1 << idx))
           {
-            if (limit_state & (1 << idx))
-            {
-#ifdef COREXY
-              if (idx == Z_AXIS)
-              {
-                axislock &= ~(step_pin[Z_AXIS]);
-              }
-              else
-              {
-                axislock &= ~(step_pin[A_MOTOR] | step_pin[B_MOTOR]);
-              }
-#else
-              axislock &= ~(step_pin[idx]);
-#endif
-            }
+            axislock &= ~(step_pin[idx]);
           }
         }
+        
         sys.homing_axis_lock = axislock;
       }
-
       st_prep_buffer(); // 检查并准备段缓冲区。注意：此操作应不超过 200 微秒。
       // 退出例程：在此循环中没有时间运行 protocol_execute_realtime()。
       if (sys_rt_exec_state & (EXEC_SAFETY_DOOR | EXEC_RESET | EXEC_CYCLE_STOP))
@@ -277,7 +250,7 @@ void tool_home(uint8_t flag)
 
   } while (n_cycle-- > 0);
 
-  sys_position[3] = 0;
+  sys_position[idx] = 0;
   sys.step_control = STEP_CONTROL_NORMAL_OP; // 将步进控制返回到正常操作。
   protocol_execute_realtime();               // 检查重置并设置系统中止。
   if (sys.abort)
