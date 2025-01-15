@@ -245,7 +245,7 @@ void report_grbl_settings()
   report_util_uint8_setting(TOOL_SETTINGS_START_VAL - 1, settings.tool);
   for (tool_number = 0; tool_number < TOOL_NUM; tool_number++)
   {
-    for (idx = 0; idx < 2; idx++)
+    for (idx = 0; idx < 3; idx++)
     {
       switch (idx)
       {
@@ -255,9 +255,12 @@ void report_grbl_settings()
       case 1:
         report_util_float_setting(tool_val + idx, settings.tool_y[tool_number], N_DECIMAL_SETTINGVALUE);
         break;
+      case 2:
+        report_util_float_setting(tool_val + idx, settings.tool_z[tool_number], N_DECIMAL_SETTINGVALUE);
+        break;
       }
     }
-    tool_val += 2;
+    tool_val += 3;
   }
 }
 

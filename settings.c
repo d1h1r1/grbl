@@ -129,6 +129,7 @@ void settings_restore(uint8_t restore_flag)
     {
       settings.tool_x[i] = i * 20 + 20;
       settings.tool_y[i] = i * 20 + 20;
+      settings.tool_z[i] = i * 20 + 20;
     }
 
 #ifdef A_AXIS
@@ -274,6 +275,9 @@ uint8_t settings_store_global_setting(uint8_t parameter, float value)
       break;
     case 1:
       settings.tool_y[index] = value;
+      break;
+    case 2:
+      settings.tool_z[index] = value;
       break;
     }
   }

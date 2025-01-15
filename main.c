@@ -81,6 +81,7 @@ int main(void)
     limits_init();
     probe_control_init();
     laser_control_init();
+    tool_control_init();
     probe_init();
     sleep_init();
     plan_reset(); // 清除块缓冲区和规划器变量

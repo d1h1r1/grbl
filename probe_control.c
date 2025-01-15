@@ -2,12 +2,12 @@
 
 void close_all_relay()
 {
-    PORTL &= ~((1 << 2) | (1 << 3));
+    PORTL &= ~((1 << 2) | (1 << 3)); // 低电平
 }
 
 void open_all_relay()
 {
-    PORTL |= ~((1 << 2) | (1 << 3));
+    PORTL |= ~((1 << 2) | (1 << 3)); // 高电平
 }
 
 void probe_control_init()

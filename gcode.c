@@ -21,7 +21,7 @@
 // 一些 GUI 可能需要更大的值。因此，我们基于将浮点数
 // 转换为整数的最大安全值（7.2 位精度）增加了该值。
 #define MAX_LINE_NUMBER 10000000
-#define MAX_TOOL_NUMBER 2 // 受限于最大无符号 8 位值
+#define MAX_TOOL_NUMBER 8 // 受限于最大无符号 8 位值
 
 #define AXIS_COMMAND_NONE 0
 #define AXIS_COMMAND_NON_MODAL 1
