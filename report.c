@@ -494,7 +494,9 @@ void report_realtime_status()
   int32_t current_position[N_AXIS]; // 复制系统位置变量的当前状态
   memcpy(current_position, sys_position, sizeof(sys_position));
   float print_position[N_AXIS];
+  float offset_position[N_AXIS];
   system_convert_array_steps_to_mpos(print_position, current_position);
+  system_convert_array_steps_to_mpos(offset_position, current_position);
 
   // 报告当前机器状态和子状态
   serial_write('<');
@@ -576,21 +578,25 @@ void report_realtime_status()
       }
       if (bit_isfalse(settings.status_report_mask, BITFLAG_RT_STATUS_POSITION_TYPE))
       {
-        print_position[idx] -= wco[idx];
+        offset_position[idx] -= wco[idx];
       }
     }
   }
 
   // 报告机器位置
-  if (bit_istrue(settings.status_report_mask, BITFLAG_RT_STATUS_POSITION_TYPE))
-  {
-    printPgmString(PSTR("|MPos:"));
-  }
-  else
-  {
-    printPgmString(PSTR("|WPos:"));
-  }
+  // if (bit_istrue(settings.status_report_mask, BITFLAG_RT_STATUS_POSITION_TYPE))
+  // {
+  //   printPgmString(PSTR("|MPos:"));
+  // }
+  // else
+  // {
+  //   printPgmString(PSTR("|WPos:"));
+  // }
+  // report_util_axis_values(print_position);
+  printPgmString(PSTR("|MPos:"));
   report_util_axis_values(print_position);
+  printPgmString(PSTR("|WPos:"));
+  report_util_axis_values(offset_position);
 
 // 返回规划器和串行读取缓冲区状态。
 #ifdef REPORT_FIELD_BUFFER_STATE
