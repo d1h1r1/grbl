@@ -127,9 +127,9 @@ void settings_restore(uint8_t restore_flag)
     settings.tool = 1;
     for (size_t i = 0; i < TOOL_NUM; i++)
     {
-      settings.tool_x[i] = i * 20 + 20;
-      settings.tool_y[i] = i * 20 + 20;
-      settings.tool_z[i] = i * 20 + 20;
+      settings.tool_x[i] = i * 10;
+      settings.tool_y[i] = i * 10;
+      settings.tool_z[i] = i * 10;
     }
 
 #ifdef A_AXIS

@@ -21,11 +21,11 @@ void return_tool()
   // 移动到要还刀的xy位置
   float2string(settings.tool_x[settings.tool - 1], x_char, 3);
   float2string(settings.tool_y[settings.tool - 1], y_char, 3);
-  sprintf(command, "G90G59G01X%sY%sF1000", x_char, y_char);
+  sprintf(command, "G90G59G01X-%sY-%sF1000", x_char, y_char);
   gc_execute_line(command);
   // 下降到还刀位置
   float2string(settings.tool_z[settings.tool - 1], z_char, 3);
-  sprintf(command, "G90G59G01Z%sF1000", z_char);
+  sprintf(command, "G90G59G01Z-%sF1000", z_char);
   gc_execute_line(command);
   // 松刀
   tool_home(1);
@@ -38,11 +38,11 @@ void get_tool(uint8_t tool_number)
   // 移动取刀位置
   float2string(settings.tool_x[tool_number - 1], x_char, 3);
   float2string(settings.tool_y[tool_number - 1], y_char, 3);
-  sprintf(command, "G90G59G01X%sY%sF1000", x_char, y_char);
+  sprintf(command, "G90G59G01X-%sY-%sF1000", x_char, y_char);
   gc_execute_line(command);
   // 下降到取刀位置
   float2string(settings.tool_z[tool_number - 1], z_char, 3);
-  sprintf(command, "G90G59G01Z%sF1000", z_char);
+  sprintf(command, "G90G59G01Z-%sF1000", z_char);
   gc_execute_line(command);
   // 紧刀
   delay_ms(100);
