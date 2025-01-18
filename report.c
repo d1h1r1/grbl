@@ -598,6 +598,28 @@ void report_realtime_status()
   printPgmString(PSTR("|WPos:"));
   report_util_axis_values(offset_position);
 
+  printPgmString(PSTR("|T:"));
+  print_uint8_base10(settings.tool);
+  printPgmString(PSTR("|F:"));
+  printFloat_RateValue(gc_state.feed_rate);
+  printPgmString(PSTR("|S:"));
+  printFloat(gc_state.spindle_speed, N_DECIMAL_RPMVALUE);
+  printPgmString(PSTR("|M:"));
+  switch (gc_state.modal.spindle)
+  {
+  case SPINDLE_ENABLE_CW:
+    serial_write('3');
+    break;
+  case SPINDLE_ENABLE_CCW:
+    serial_write('4');
+    break;
+  case SPINDLE_DISABLE:
+    serial_write('5');
+    break;
+  }
+  printPgmString(PSTR("|G:"));
+  print_uint8_base10(gc_state.modal.coord_select + 54);
+
 // 返回规划器和串行读取缓冲区状态。
 #ifdef REPORT_FIELD_BUFFER_STATE
   if (bit_istrue(settings.status_report_mask, BITFLAG_RT_STATUS_BUFFER_STATE))
