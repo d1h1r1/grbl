@@ -242,7 +242,9 @@ void report_grbl_settings()
     val += AXIS_SETTINGS_INCREMENT;
   }
   uint8_t tool_val = TOOL_SETTINGS_START_VAL;
-  report_util_uint8_setting(TOOL_SETTINGS_START_VAL - 1, settings.tool);
+  report_util_uint8_setting(200, settings.tool);
+  report_util_float_setting(201, settings.tool_length, N_DECIMAL_SETTINGVALUE);
+  report_util_float_setting(202, settings.tool_zpos, N_DECIMAL_SETTINGVALUE);
   for (tool_number = 0; tool_number < TOOL_NUM; tool_number++)
   {
     for (idx = 0; idx < 3; idx++)
@@ -312,6 +314,9 @@ void report_ngc_parameters()
   report_util_feedback_line_feed();
   printPgmString(PSTR("[TLO:")); // 打印工具长度偏移值
   printFloat_CoordValue(gc_state.tool_length_offset);
+  report_util_feedback_line_feed();
+  printPgmString(PSTR("[Zpos:")); // 打印z轴位置
+  printFloat_CoordValue(settings.tool_zpos);
   report_util_feedback_line_feed();
   report_probe_parameters(); // 打印探针参数。内存中不持久。
 }

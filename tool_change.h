@@ -10,4 +10,5 @@ void change_tool(uint8_t tool_number);
 void return_tool();
 void get_tool(uint8_t tool_number);
 void tool_control_init();
+void tool_length_zero();
 #endif

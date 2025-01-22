@@ -38,7 +38,7 @@ parser_block_t gc_block;
 void gc_init()
 {
   memset(&gc_state, 0, sizeof(parser_state_t));
-
+  gc_state.tool_length_offset = settings.tool_length;
   // 加载默认的 G54 坐标系。
   if (!(settings_read_coord_data(gc_state.modal.coord_select, gc_state.coord_system)))
   {
@@ -1339,6 +1339,8 @@ uint8_t gc_execute_line(char *line)
     if (gc_state.tool_length_offset != gc_block.values.xyz[TOOL_LENGTH_OFFSET_AXIS])
     {
       gc_state.tool_length_offset = gc_block.values.xyz[TOOL_LENGTH_OFFSET_AXIS];
+      settings.tool_length = gc_state.tool_length_offset;
+      write_global_settings(); // 将更新后的刀长写入eeprom
       system_flag_wco_change();
     }
   }

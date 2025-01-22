@@ -29,8 +29,8 @@ int main(void)
   stepper_init();  // 配置步进电机引脚和中断定时器
   system_init();   // 配置引脚引脚和引脚变更中断
 
-  memset(sys_position, 0, sizeof(sys_position)); // 清除机器位置。
-  sei();                                         // 启用中断
+  // memset(sys_position, 0, sizeof(sys_position)); // 清除机器位置。
+  sei(); // 启用中断
 
 // 初始化系统状态。
 #ifdef FORCE_INITIALIZATION_ALARM
@@ -58,15 +58,14 @@ int main(void)
   // 将返回到此循环以进行干净的重新初始化。
   for (;;)
   {
-
     // 重置系统变量。
     uint8_t prior_state = sys.state;
     memset(&sys, 0, sizeof(system_t)); // 清除系统结构变量。
     sys.state = prior_state;
-    sys.f_override = DEFAULT_FEED_OVERRIDE;                    // 设置为 100%
-    sys.r_override = DEFAULT_RAPID_OVERRIDE;                   // 设置为 100%
-    sys.spindle_speed_ovr = DEFAULT_SPINDLE_SPEED_OVERRIDE;    // 设置为 100%
-    memset(sys_probe_position, 0, sizeof(sys_probe_position)); // 清除探测位置。
+    sys.f_override = DEFAULT_FEED_OVERRIDE;                 // 设置为 100%
+    sys.r_override = DEFAULT_RAPID_OVERRIDE;                // 设置为 100%
+    sys.spindle_speed_ovr = DEFAULT_SPINDLE_SPEED_OVERRIDE; // 设置为 100%
+    // memset(sys_probe_position, 0, sizeof(sys_probe_position)); // 清除探测位置。
     sys_probe_state = 0;
     sys_rt_exec_state = 0;
     sys_rt_exec_alarm = 0;
@@ -90,10 +89,6 @@ int main(void)
     // 将清除的 G-code 和规划器位置同步到当前系统位置。
     plan_sync_position();
     gc_sync_position();
-    // print_uint8_base2_ndigit(8, limits_get_state());
-    // printString("\n");
-    // delay_ms(1);
-    // continue;
     // 打印欢迎消息。指示在上电或重置时发生了初始化。
     report_init_message();
 

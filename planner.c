@@ -20,41 +20,44 @@
 
 #include "grbl.h"
 
-
-static plan_block_t block_buffer[BLOCK_BUFFER_SIZE];  // 运动指令的环形缓冲区
-static uint8_t block_buffer_tail;     // 当前处理的块索引
-static uint8_t block_buffer_head;     // 下一个要推入的块索引
-static uint8_t next_buffer_head;      // 下一个缓冲区头索引
-static uint8_t block_buffer_planned;  // 最优规划块的索引
+static plan_block_t block_buffer[BLOCK_BUFFER_SIZE]; // 运动指令的环形缓冲区
+static uint8_t block_buffer_tail;                    // 当前处理的块索引
+static uint8_t block_buffer_head;                    // 下一个要推入的块索引
+static uint8_t next_buffer_head;                     // 下一个缓冲区头索引
+static uint8_t block_buffer_planned;                 // 最优规划块的索引
 
 // 定义规划变量
-typedef struct {
-  int32_t position[N_AXIS];          // 工具在绝对步长下的规划位置。与 G-code 位置分开保存
-                                     // 以处理需要多个线路运动的移动，
-                                     // 即弧线、固定循环和反向间隙补偿。
-  float previous_unit_vec[N_AXIS];   // 前一个路径线段的单位向量
-  float previous_nominal_speed;  // 前一个路径线段的名义速度
+typedef struct
+{
+  int32_t position[N_AXIS];        // 工具在绝对步长下的规划位置。与 G-code 位置分开保存
+                                   // 以处理需要多个线路运动的移动，
+                                   // 即弧线、固定循环和反向间隙补偿。
+  float previous_unit_vec[N_AXIS]; // 前一个路径线段的单位向量
+  float previous_nominal_speed;    // 前一个路径线段的名义速度
 } planner_t;
 static planner_t pl;
-
 
 // 返回环形缓冲区中下一个块的索引。也由步进段缓冲区调用。
 uint8_t plan_next_block_index(uint8_t block_index)
 {
   block_index++;
-  if (block_index == BLOCK_BUFFER_SIZE) { block_index = 0; }
-  return(block_index);
+  if (block_index == BLOCK_BUFFER_SIZE)
+  {
+    block_index = 0;
+  }
+  return (block_index);
 }
-
 
 // 返回环形缓冲区中前一个块的索引
 static uint8_t plan_prev_block_index(uint8_t block_index)
 {
-  if (block_index == 0) { block_index = BLOCK_BUFFER_SIZE; }
+  if (block_index == 0)
+  {
+    block_index = BLOCK_BUFFER_SIZE;
+  }
   block_index--;
-  return(block_index);
+  return (block_index);
 }
-
 
 /*                            规划速度定义
                                      +--------+   <- current->nominal_speed
@@ -97,9 +100,12 @@ static void planner_recalculate()
   uint8_t block_index = plan_prev_block_index(block_buffer_head);
 
   // 退出。如果只有一个可规划的块，则无法执行任何操作。
-  if (block_index == block_buffer_planned) { return; }
+  if (block_index == block_buffer_planned)
+  {
+    return;
+  }
 
-  // 反向计算：从缓冲区中的最后一个块开始粗略最大化所有可能的减速曲线。 
+  // 反向计算：从缓冲区中的最后一个块开始粗略最大化所有可能的减速曲线。
   // 当达到最后一个最优规划块或尾指针时停止规划。
   // 注意：正向计算将稍后细化和纠正反向计算，以创建最优规划。
   float entry_speed_sqr;
@@ -110,24 +116,38 @@ static void planner_recalculate()
   current->entry_speed_sqr = min(current->max_entry_speed_sqr, 2 * current->acceleration * current->millimeters);
 
   block_index = plan_prev_block_index(block_index);
-  if (block_index == block_buffer_planned) { // 缓冲区中只有两个可规划块。反向计算完成。
+  if (block_index == block_buffer_planned)
+  { // 缓冲区中只有两个可规划块。反向计算完成。
     // 检查第一个块是否是尾块。如果是，通知步进器更新其当前参数。
-    if (block_index == block_buffer_tail) { st_update_plan_block_parameters(); }
-  } else { // 三个或更多可规划块
-    while (block_index != block_buffer_planned) {
+    if (block_index == block_buffer_tail)
+    {
+      st_update_plan_block_parameters();
+    }
+  }
+  else
+  { // 三个或更多可规划块
+    while (block_index != block_buffer_planned)
+    {
       next = current;
       current = &block_buffer[block_index];
       block_index = plan_prev_block_index(block_index);
 
       // 检查下一个块是否是尾块（=规划块）。如果是，更新当前步进器参数。
-      if (block_index == block_buffer_tail) { st_update_plan_block_parameters(); }
+      if (block_index == block_buffer_tail)
+      {
+        st_update_plan_block_parameters();
+      }
 
       // 根据当前块的退出速度计算最大入口速度。
-      if (current->entry_speed_sqr != current->max_entry_speed_sqr) {
+      if (current->entry_speed_sqr != current->max_entry_speed_sqr)
+      {
         entry_speed_sqr = next->entry_speed_sqr + 2 * current->acceleration * current->millimeters;
-        if (entry_speed_sqr < current->max_entry_speed_sqr) {
+        if (entry_speed_sqr < current->max_entry_speed_sqr)
+        {
           current->entry_speed_sqr = entry_speed_sqr;
-        } else {
+        }
+        else
+        {
           current->entry_speed_sqr = current->max_entry_speed_sqr;
         }
       }
@@ -138,29 +158,34 @@ static void planner_recalculate()
   // 还扫描最优规划的断点并适当地更新规划指针。
   next = &block_buffer[block_buffer_planned]; // 从缓冲区规划指针开始
   block_index = plan_next_block_index(block_buffer_planned);
-  while (block_index != block_buffer_head) {
+  while (block_index != block_buffer_head)
+  {
     current = next;
     next = &block_buffer[block_index];
 
     // 在正向计算中检测到的任何加速自动将最优规划指针向前移动，因为之前的所有都是最优的。
     // 换句话说，逻辑上从缓冲区尾到规划指针之间的任何内容都无法改善规划。
-    if (current->entry_speed_sqr < next->entry_speed_sqr) {
+    if (current->entry_speed_sqr < next->entry_speed_sqr)
+    {
       entry_speed_sqr = current->entry_speed_sqr + 2 * current->acceleration * current->millimeters;
       // 如果为真，当前块为全加速，且我们可以将规划指针向前移动。
-      if (entry_speed_sqr < next->entry_speed_sqr) {
+      if (entry_speed_sqr < next->entry_speed_sqr)
+      {
         next->entry_speed_sqr = entry_speed_sqr; // 始终 <= max_entry_speed_sqr。反向计算设置此值。
-        block_buffer_planned = block_index; // 设置最优规划指针。
+        block_buffer_planned = block_index;      // 设置最优规划指针。
       }
     }
 
     // 任何设置为其最大入口速度的块也会在缓冲区的这一点上创建最优规划。
     // 当规划被缓冲区的开头和最大入口速度或两个最大入口速度括起来时，之间的每个块都逻辑上无法进一步改善。
     // 因此，我们不再需要重新计算它们。
-    if (next->entry_speed_sqr == next->max_entry_speed_sqr) { block_buffer_planned = block_index; }
+    if (next->entry_speed_sqr == next->max_entry_speed_sqr)
+    {
+      block_buffer_planned = block_index;
+    }
     block_index = plan_next_block_index(block_index);
   }
 }
-
 
 void plan_reset()
 {
@@ -168,82 +193,108 @@ void plan_reset()
   plan_reset_buffer();
 }
 
-
 void plan_reset_buffer()
 {
   block_buffer_tail = 0;
-  block_buffer_head = 0; // 空 = 尾
-  next_buffer_head = 1; // plan_next_block_index(block_buffer_head)
+  block_buffer_head = 0;    // 空 = 尾
+  next_buffer_head = 1;     // plan_next_block_index(block_buffer_head)
   block_buffer_planned = 0; // = block_buffer_tail;
 }
 
-
 void plan_discard_current_block()
 {
-  if (block_buffer_head != block_buffer_tail) { // 丢弃非空缓冲区。
+  if (block_buffer_head != block_buffer_tail)
+  { // 丢弃非空缓冲区。
     uint8_t block_index = plan_next_block_index(block_buffer_tail);
     // 如果遇到则推送 block_buffer_planned 指针。
-    if (block_buffer_tail == block_buffer_planned) { block_buffer_planned = block_index; }
+    if (block_buffer_tail == block_buffer_planned)
+    {
+      block_buffer_planned = block_index;
+    }
     block_buffer_tail = block_index;
   }
 }
 
-
 // 返回系统运动使用的规划缓冲区块的地址。由段生成器调用。
 plan_block_t *plan_get_system_motion_block()
 {
-  return(&block_buffer[block_buffer_head]);
+  return (&block_buffer[block_buffer_head]);
 }
-
 
 // 返回第一个规划块的地址（如果可用）。由各种主程序功能调用。
 plan_block_t *plan_get_current_block()
 {
-  if (block_buffer_head == block_buffer_tail) { return(NULL); } // 缓冲区为空
-  return(&block_buffer[block_buffer_tail]);
+  if (block_buffer_head == block_buffer_tail)
+  {
+    return (NULL);
+  } // 缓冲区为空
+  return (&block_buffer[block_buffer_tail]);
 }
-
 
 float plan_get_exec_block_exit_speed_sqr()
 {
   uint8_t block_index = plan_next_block_index(block_buffer_tail);
-  if (block_index == block_buffer_head) { return( 0.0 ); }
-  return( block_buffer[block_index].entry_speed_sqr );
+  if (block_index == block_buffer_head)
+  {
+    return (0.0);
+  }
+  return (block_buffer[block_index].entry_speed_sqr);
 }
-
 
 // 返回块环形缓冲区的可用状态。如果满，返回真。
 uint8_t plan_check_full_buffer()
 {
-  if (block_buffer_tail == next_buffer_head) { return(true); }
-  return(false);
+  if (block_buffer_tail == next_buffer_head)
+  {
+    return (true);
+  }
+  return (false);
 }
-
 
 // 根据运行条件和覆盖值计算并返回块的名义速度。
 // 注意：所有系统运动命令，如归位/停车，不受覆盖的影响。
 float plan_compute_profile_nominal_speed(plan_block_t *block)
 {
   float nominal_speed = block->programmed_rate;
-  if (block->condition & PL_COND_FLAG_RAPID_MOTION) { nominal_speed *= (0.01 * sys.r_override); }
-  else {
-    if (!(block->condition & PL_COND_FLAG_NO_FEED_OVERRIDE)) { nominal_speed *= (0.01 * sys.f_override); }
-    if (nominal_speed > block->rapid_rate) { nominal_speed = block->rapid_rate; }
+  if (block->condition & PL_COND_FLAG_RAPID_MOTION)
+  {
+    nominal_speed *= (0.01 * sys.r_override);
   }
-  if (nominal_speed > MINIMUM_FEED_RATE) { return(nominal_speed); }
-  return(MINIMUM_FEED_RATE);
+  else
+  {
+    if (!(block->condition & PL_COND_FLAG_NO_FEED_OVERRIDE))
+    {
+      nominal_speed *= (0.01 * sys.f_override);
+    }
+    if (nominal_speed > block->rapid_rate)
+    {
+      nominal_speed = block->rapid_rate;
+    }
+  }
+  if (nominal_speed > MINIMUM_FEED_RATE)
+  {
+    return (nominal_speed);
+  }
+  return (MINIMUM_FEED_RATE);
 }
-
 
 // 计算并更新块的最大入口速度（平方），基于连接的前后名义速度和最大连接速度的最小值。
 static void plan_compute_profile_parameters(plan_block_t *block, float nominal_speed, float prev_nominal_speed)
 {
   // 根据连接速度和相邻名义速度的最小值计算连接的最大入口速度。
-  if (nominal_speed > prev_nominal_speed) { block->max_entry_speed_sqr = prev_nominal_speed * prev_nominal_speed; }
-  else { block->max_entry_speed_sqr = nominal_speed * nominal_speed; }
-  if (block->max_entry_speed_sqr > block->max_junction_speed_sqr) { block->max_entry_speed_sqr = block->max_junction_speed_sqr; }
+  if (nominal_speed > prev_nominal_speed)
+  {
+    block->max_entry_speed_sqr = prev_nominal_speed * prev_nominal_speed;
+  }
+  else
+  {
+    block->max_entry_speed_sqr = nominal_speed * nominal_speed;
+  }
+  if (block->max_entry_speed_sqr > block->max_junction_speed_sqr)
+  {
+    block->max_entry_speed_sqr = block->max_junction_speed_sqr;
+  }
 }
-
 
 // 在基于运动的覆盖变化后重新计算缓冲运动的参数。
 void plan_update_velocity_profile_parameters()
@@ -252,7 +303,8 @@ void plan_update_velocity_profile_parameters()
   plan_block_t *block;
   float nominal_speed;
   float prev_nominal_speed = SOME_LARGE_VALUE; // 设置为高值以便计算第一个块的名义速度。
-  while (block_index != block_buffer_head) {
+  while (block_index != block_buffer_head)
+  {
     block = &block_buffer[block_index];
     nominal_speed = plan_compute_profile_nominal_speed(block);
     plan_compute_profile_parameters(block, nominal_speed, prev_nominal_speed);
@@ -261,7 +313,6 @@ void plan_update_velocity_profile_parameters()
   }
   pl.previous_nominal_speed = prev_nominal_speed; // 更新上一个名义速度，以便于下一个传入块。
 }
-
 
 /* 将新的线性运动添加到缓冲区。 target[N_AXIS] 是以毫米为单位的带符号绝对目标位置。
    进给速率指定运动的速度。如果进给速率被反转，则进给速率表示“频率”，将在 1/进给速率分钟内完成操作。
@@ -274,7 +325,7 @@ uint8_t plan_buffer_line(float *target, plan_line_data_t *pl_data)
 {
   // 准备并初始化新块。复制相关的 pl_data 以供块执行。
   plan_block_t *block = &block_buffer[block_buffer_head];
-  memset(block,0,sizeof(plan_block_t)); // 将所有块值置零。
+  memset(block, 0, sizeof(plan_block_t)); // 将所有块值置零。
   block->condition = pl_data->condition;
   block->spindle_speed = pl_data->spindle_speed;
   block->line_number = pl_data->line_number;
@@ -285,54 +336,72 @@ uint8_t plan_buffer_line(float *target, plan_line_data_t *pl_data)
   uint8_t idx;
 
   // 根据计划的运动类型复制位置数据。
-  if (block->condition & PL_COND_FLAG_SYSTEM_MOTION) { 
-    #ifdef COREXY
-      position_steps[X_AXIS] = system_convert_corexy_to_x_axis_steps(sys_position);
-      position_steps[Y_AXIS] = system_convert_corexy_to_y_axis_steps(sys_position);
-      position_steps[Z_AXIS] = sys_position[Z_AXIS];
-    #else
-      memcpy(position_steps, sys_position, sizeof(sys_position)); 
-    #endif
-  } else { memcpy(position_steps, pl.position, sizeof(pl.position)); }
+  if (block->condition & PL_COND_FLAG_SYSTEM_MOTION)
+  {
+#ifdef COREXY
+    position_steps[X_AXIS] = system_convert_corexy_to_x_axis_steps(sys_position);
+    position_steps[Y_AXIS] = system_convert_corexy_to_y_axis_steps(sys_position);
+    position_steps[Z_AXIS] = sys_position[Z_AXIS];
+#else
+    memcpy(position_steps, sys_position, sizeof(sys_position));
+#endif
+  }
+  else
+  {
+    memcpy(position_steps, pl.position, sizeof(pl.position));
+  }
 
-  #ifdef COREXY
-    target_steps[A_MOTOR] = lround(target[A_MOTOR]*settings.steps_per_mm[A_MOTOR]);
-    target_steps[B_MOTOR] = lround(target[B_MOTOR]*settings.steps_per_mm[B_MOTOR]);
-    block->steps[A_MOTOR] = labs((target_steps[X_AXIS]-position_steps[X_AXIS]) + (target_steps[Y_AXIS]-position_steps[Y_AXIS]));
-    block->steps[B_MOTOR] = labs((target_steps[X_AXIS]-position_steps[X_AXIS]) - (target_steps[Y_AXIS]-position_steps[Y_AXIS]));
-  #endif
+#ifdef COREXY
+  target_steps[A_MOTOR] = lround(target[A_MOTOR] * settings.steps_per_mm[A_MOTOR]);
+  target_steps[B_MOTOR] = lround(target[B_MOTOR] * settings.steps_per_mm[B_MOTOR]);
+  block->steps[A_MOTOR] = labs((target_steps[X_AXIS] - position_steps[X_AXIS]) + (target_steps[Y_AXIS] - position_steps[Y_AXIS]));
+  block->steps[B_MOTOR] = labs((target_steps[X_AXIS] - position_steps[X_AXIS]) - (target_steps[Y_AXIS] - position_steps[Y_AXIS]));
+#endif
 
-  for (idx=0; idx<N_AXIS; idx++) {
-    // 计算目标位置的绝对步数、每个轴的步数，并确定最大步数事件。
-    // 还计算每个轴的移动距离并准备单位向量计算。
-    // 注意：计算的是真正的距离，基于转换后的步数值。
-    #ifdef COREXY
-      if ( !(idx == A_MOTOR) && !(idx == B_MOTOR) ) {
-        target_steps[idx] = lround(target[idx]*settings.steps_per_mm[idx]);
-        block->steps[idx] = labs(target_steps[idx]-position_steps[idx]);
-      }
-      block->step_event_count = max(block->step_event_count, block->steps[idx]);
-      if (idx == A_MOTOR) {
-        delta_mm = (target_steps[X_AXIS]-position_steps[X_AXIS] + target_steps[Y_AXIS]-position_steps[Y_AXIS])/settings.steps_per_mm[idx];
-      } else if (idx == B_MOTOR) {
-        delta_mm = (target_steps[X_AXIS]-position_steps[X_AXIS] - target_steps[Y_AXIS]+position_steps[Y_AXIS])/settings.steps_per_mm[idx];
-      } else {
-        delta_mm = (target_steps[idx] - position_steps[idx])/settings.steps_per_mm[idx];
-      }
-    #else
-      target_steps[idx] = lround(target[idx]*settings.steps_per_mm[idx]);
-      block->steps[idx] = labs(target_steps[idx]-position_steps[idx]);
-      block->step_event_count = max(block->step_event_count, block->steps[idx]);
-      delta_mm = (target_steps[idx] - position_steps[idx])/settings.steps_per_mm[idx];
-	  #endif
+  for (idx = 0; idx < N_AXIS; idx++)
+  {
+// 计算目标位置的绝对步数、每个轴的步数，并确定最大步数事件。
+// 还计算每个轴的移动距离并准备单位向量计算。
+// 注意：计算的是真正的距离，基于转换后的步数值。
+#ifdef COREXY
+    if (!(idx == A_MOTOR) && !(idx == B_MOTOR))
+    {
+      target_steps[idx] = lround(target[idx] * settings.steps_per_mm[idx]);
+      block->steps[idx] = labs(target_steps[idx] - position_steps[idx]);
+    }
+    block->step_event_count = max(block->step_event_count, block->steps[idx]);
+    if (idx == A_MOTOR)
+    {
+      delta_mm = (target_steps[X_AXIS] - position_steps[X_AXIS] + target_steps[Y_AXIS] - position_steps[Y_AXIS]) / settings.steps_per_mm[idx];
+    }
+    else if (idx == B_MOTOR)
+    {
+      delta_mm = (target_steps[X_AXIS] - position_steps[X_AXIS] - target_steps[Y_AXIS] + position_steps[Y_AXIS]) / settings.steps_per_mm[idx];
+    }
+    else
+    {
+      delta_mm = (target_steps[idx] - position_steps[idx]) / settings.steps_per_mm[idx];
+    }
+#else
+    target_steps[idx] = lround(target[idx] * settings.steps_per_mm[idx]);
+    block->steps[idx] = labs(target_steps[idx] - position_steps[idx]);
+    block->step_event_count = max(block->step_event_count, block->steps[idx]);
+    delta_mm = (target_steps[idx] - position_steps[idx]) / settings.steps_per_mm[idx];
+#endif
     unit_vec[idx] = delta_mm; // 存储单位向量的分子
 
     // 设置方向位。启用的位表示方向为负。
-    if (delta_mm < 0.0 ) { block->direction_bits |= get_direction_pin_mask(idx); }
+    if (delta_mm < 0.0)
+    {
+      block->direction_bits |= get_direction_pin_mask(idx);
+    }
   }
 
   // 如果这是一个零长度块，则退出。极不可能发生。
-  if (block->step_event_count == 0) { return(PLAN_EMPTY_BLOCK); }
+  if (block->step_event_count == 0)
+  {
+    return (PLAN_EMPTY_BLOCK);
+  }
 
   // 计算线性移动的单位向量以及块的最大进给速率和加速度，确保不超过各轴的最大值。
   // 注意：该计算假设所有轴都是正交的（笛卡尔坐标系），并且可以与 ABC 轴一起工作，
@@ -342,21 +411,30 @@ uint8_t plan_buffer_line(float *target, plan_line_data_t *pl_data)
   block->rapid_rate = limit_value_by_axis_maximum(settings.max_rate, unit_vec);
 
   // 存储编程速率。
-  if (block->condition & PL_COND_FLAG_RAPID_MOTION) { block->programmed_rate = block->rapid_rate; }
-  else { 
+  if (block->condition & PL_COND_FLAG_RAPID_MOTION)
+  {
+    block->programmed_rate = block->rapid_rate;
+  }
+  else
+  {
     block->programmed_rate = pl_data->feed_rate;
-    if (block->condition & PL_COND_FLAG_INVERSE_TIME) { block->programmed_rate *= block->millimeters; }
+    if (block->condition & PL_COND_FLAG_INVERSE_TIME)
+    {
+      block->programmed_rate *= block->millimeters;
+    }
   }
 
   // TODO: 需要检查在从静止状态开始时处理零连接速度的方法。
-  if ((block_buffer_head == block_buffer_tail) || (block->condition & PL_COND_FLAG_SYSTEM_MOTION)) {
+  if ((block_buffer_head == block_buffer_tail) || (block->condition & PL_COND_FLAG_SYSTEM_MOTION))
+  {
 
     // 将块入口速度初始化为零。假设它将从静止开始。规划器将在稍后修正。
     // 如果是系统运动，则始终假设系统运动块从静止开始，并在完全停止时结束。
     block->entry_speed_sqr = 0.0;
     block->max_junction_speed_sqr = 0.0; // 从静止开始。强制从零速度开始。
-
-  } else {
+  }
+  else
+  {
     // 通过向心加速度近似计算连接处的最大允许入口速度。
     // 让一个圆与之前和当前路径线段相切，连接处的偏差定义为连接处到圆的最近边缘的距离，
     // 与圆心共线。连接这两条路径的圆弧段表示向心加速度的路径。根据关于圆的半径的最大加速度求解最大速度，
@@ -374,38 +452,46 @@ uint8_t plan_buffer_line(float *target, plan_line_data_t *pl_data)
 
     float junction_unit_vec[N_AXIS];
     float junction_cos_theta = 0.0;
-    for (idx=0; idx<N_AXIS; idx++) {
-      junction_cos_theta -= pl.previous_unit_vec[idx]*unit_vec[idx];
-      junction_unit_vec[idx] = unit_vec[idx]-pl.previous_unit_vec[idx];
+    for (idx = 0; idx < N_AXIS; idx++)
+    {
+      junction_cos_theta -= pl.previous_unit_vec[idx] * unit_vec[idx];
+      junction_unit_vec[idx] = unit_vec[idx] - pl.previous_unit_vec[idx];
     }
 
     // 注意：通过三角函数半角恒等式计算，无需任何昂贵的三角函数 sin() 或 acos()。
-    if (junction_cos_theta > 0.999999) {
+    if (junction_cos_theta > 0.999999)
+    {
       // 对于 0 度的锐角连接，只需设置最小连接速度。
-      block->max_junction_speed_sqr = MINIMUM_JUNCTION_SPEED*MINIMUM_JUNCTION_SPEED;
-    } else {
-      if (junction_cos_theta < -0.999999) {
+      block->max_junction_speed_sqr = MINIMUM_JUNCTION_SPEED * MINIMUM_JUNCTION_SPEED;
+    }
+    else
+    {
+      if (junction_cos_theta < -0.999999)
+      {
         // 连接是直线或 180 度。连接速度是无限的。
         block->max_junction_speed_sqr = SOME_LARGE_VALUE;
-      } else {
+      }
+      else
+      {
         convert_delta_vector_to_unit_vector(junction_unit_vec);
         float junction_acceleration = limit_value_by_axis_maximum(settings.acceleration, junction_unit_vec);
-        float sin_theta_d2 = sqrt(0.5*(1.0-junction_cos_theta)); // 三角半角恒等式。始终为正。
-        block->max_junction_speed_sqr = max(MINIMUM_JUNCTION_SPEED*MINIMUM_JUNCTION_SPEED,
-                       (junction_acceleration * settings.junction_deviation * sin_theta_d2)/(1.0-sin_theta_d2));
+        float sin_theta_d2 = sqrt(0.5 * (1.0 - junction_cos_theta)); // 三角半角恒等式。始终为正。
+        block->max_junction_speed_sqr = max(MINIMUM_JUNCTION_SPEED * MINIMUM_JUNCTION_SPEED,
+                                            (junction_acceleration * settings.junction_deviation * sin_theta_d2) / (1.0 - sin_theta_d2));
       }
     }
   }
 
   // 阻止系统运动更新此数据，以确保下一个 G-code 运动正确计算。
-  if (!(block->condition & PL_COND_FLAG_SYSTEM_MOTION)) {
+  if (!(block->condition & PL_COND_FLAG_SYSTEM_MOTION))
+  {
     float nominal_speed = plan_compute_profile_nominal_speed(block);
     plan_compute_profile_parameters(block, nominal_speed, pl.previous_nominal_speed);
     pl.previous_nominal_speed = nominal_speed;
 
     // 更新前一个路径单位向量和规划器位置。
     memcpy(pl.previous_unit_vec, unit_vec, sizeof(unit_vec)); // pl.previous_unit_vec[] = unit_vec[]
-    memcpy(pl.position, target_steps, sizeof(target_steps)); // pl.position[] = target_steps[]
+    memcpy(pl.position, target_steps, sizeof(target_steps));  // pl.position[] = target_steps[]
 
     // 新块已设置。更新缓冲区头和下一个缓冲区头索引。
     block_buffer_head = next_buffer_head;
@@ -414,9 +500,8 @@ uint8_t plan_buffer_line(float *target, plan_line_data_t *pl_data)
     // 最后通过新块重新计算计划。
     planner_recalculate();
   }
-  return(PLAN_OK);
+  return (PLAN_OK);
 }
-
 
 // 重置规划器位置向量。由系统中止/初始化例程调用。
 void plan_sync_position()
@@ -424,38 +509,47 @@ void plan_sync_position()
   // TODO：对于与机器位置不在同一坐标系中的电机配置，
   // 此函数需要更新以适应差异。
   uint8_t idx;
-  for (idx=0; idx<N_AXIS; idx++) {
-    #ifdef COREXY
-      if (idx==X_AXIS) {
-        pl.position[X_AXIS] = system_convert_corexy_to_x_axis_steps(sys_position);
-      } else if (idx==Y_AXIS) {
-        pl.position[Y_AXIS] = system_convert_corexy_to_y_axis_steps(sys_position);
-      } else {
-        pl.position[idx] = sys_position[idx];
-      }
-    #else
+  for (idx = 0; idx < N_AXIS; idx++)
+  {
+#ifdef COREXY
+    if (idx == X_AXIS)
+    {
+      pl.position[X_AXIS] = system_convert_corexy_to_x_axis_steps(sys_position);
+    }
+    else if (idx == Y_AXIS)
+    {
+      pl.position[Y_AXIS] = system_convert_corexy_to_y_axis_steps(sys_position);
+    }
+    else
+    {
       pl.position[idx] = sys_position[idx];
-    #endif
+    }
+#else
+    pl.position[idx] = sys_position[idx];
+#endif
   }
 }
-
 
 // 返回规划器缓冲区中可用块的数量。
 uint8_t plan_get_block_buffer_available()
 {
-  if (block_buffer_head >= block_buffer_tail) { return((BLOCK_BUFFER_SIZE-1)-(block_buffer_head-block_buffer_tail)); }
-  return((block_buffer_tail-block_buffer_head-1));
+  if (block_buffer_head >= block_buffer_tail)
+  {
+    return ((BLOCK_BUFFER_SIZE - 1) - (block_buffer_head - block_buffer_tail));
+  }
+  return ((block_buffer_tail - block_buffer_head - 1));
 }
-
 
 // 返回规划器缓冲区中活动块的数量。
 // 注意：已弃用。除非在 config.h 中启用经典状态报告，否则不使用。
 uint8_t plan_get_block_buffer_count()
 {
-  if (block_buffer_head >= block_buffer_tail) { return(block_buffer_head-block_buffer_tail); }
-  return(BLOCK_BUFFER_SIZE - (block_buffer_tail-block_buffer_head));
+  if (block_buffer_head >= block_buffer_tail)
+  {
+    return (block_buffer_head - block_buffer_tail);
+  }
+  return (BLOCK_BUFFER_SIZE - (block_buffer_tail - block_buffer_head));
 }
-
 
 // 使用假定存在于缓冲区尾部的部分完成的块重新初始化缓冲区计划。
 // 在步进电机完全停止以进行进给保持并停止循环后调用。

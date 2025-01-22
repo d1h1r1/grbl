@@ -125,9 +125,11 @@ void settings_restore(uint8_t restore_flag)
     settings.max_travel[Y_AXIS] = (-DEFAULT_Y_MAX_TRAVEL);
     settings.max_travel[Z_AXIS] = (-DEFAULT_Z_MAX_TRAVEL);
     settings.tool = 1;
+    settings.tool_length = 0;
+    settings.tool_zpos = 0;
     for (size_t i = 0; i < TOOL_NUM; i++)
     {
-      settings.tool_x[i] = i * 10;
+      settings.tool_x[i] = -1;
       settings.tool_y[i] = i * 10;
       settings.tool_z[i] = i * 10;
     }
@@ -253,21 +255,35 @@ uint8_t read_global_settings()
 // 从命令行设置设置的辅助方法
 uint8_t settings_store_global_setting(uint8_t parameter, float value)
 {
-  if (value < 0.0)
+  // if (value < 0.0)
+  // {
+  //   return (STATUS_NEGATIVE_VALUE);
+  // }
+  if (parameter < TOOL_SETTINGS_START_VAL && parameter >= 200)
   {
-    return (STATUS_NEGATIVE_VALUE);
-  }
-  if (parameter == TOOL_SETTINGS_START_VAL - 1)
-  {
-    // 储存刀号
-    settings.tool = value;
+    switch (parameter)
+    {
+    case 200:
+      // 储存刀号
+      settings.tool = value;
+      break;
+    case 201:
+      // 储存刀长
+      settings.tool_length = value;
+      gc_state.tool_length_offset = settings.tool_length;
+      break;
+    case 202:
+      // 储存刀z位置
+      settings.tool_zpos = value;
+      break;
+    }
   }
   else if (parameter >= TOOL_SETTINGS_START_VAL)
   {
     // 储存刀坐标
     parameter -= TOOL_SETTINGS_START_VAL; // 1 2 3 4 5 6
-    uint8_t index = parameter / 2;
-    uint8_t axis = parameter % 2;
+    uint8_t index = parameter / 3;
+    uint8_t axis = parameter % 3;
     switch (axis)
     {
     case 0:

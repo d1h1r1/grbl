@@ -154,6 +154,9 @@ uint8_t system_execute_line(char *line)
   case 'B':
     set_laser(1);
     break;
+  case 'E':
+    tool_length_zero();
+    break;
   case 'J': // 手动移动
     // 仅在 IDLE 或 JOG 状态下执行。
     if (sys.state != STATE_IDLE && sys.state != STATE_JOG)
