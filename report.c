@@ -266,6 +266,29 @@ void report_grbl_settings()
   }
 }
 
+void report_tool()
+{
+  uint8_t idx, tool_number, tool_val = TOOL_SETTINGS_START_VAL;
+  for (tool_number = 0; tool_number < TOOL_NUM; tool_number++)
+  {
+    for (idx = 0; idx < 3; idx++)
+    {
+      switch (idx)
+      {
+      case 0:
+        report_util_float_setting(tool_val + idx, settings.tool_x[tool_number], N_DECIMAL_SETTINGVALUE);
+        break;
+      case 1:
+        report_util_float_setting(tool_val + idx, settings.tool_y[tool_number], N_DECIMAL_SETTINGVALUE);
+        break;
+      case 2:
+        report_util_float_setting(tool_val + idx, settings.tool_z[tool_number], N_DECIMAL_SETTINGVALUE);
+        break;
+      }
+    }
+    tool_val += 3;
+  }
+}
 // 打印当前探针参数。在探针命令时，这些参数会在成功探测或在 G38.3 成功探测命令时更新（如果支持）。
 // 这些值在 Grbl 断电之前保持，断电后将重置。
 void report_probe_parameters()

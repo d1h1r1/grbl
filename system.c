@@ -157,6 +157,9 @@ uint8_t system_execute_line(char *line)
   case 'E':
     tool_length_zero();
     break;
+  case 'T':
+    report_tool();
+    break;
   case 'J': // 手动移动
     // 仅在 IDLE 或 JOG 状态下执行。
     if (sys.state != STATE_IDLE && sys.state != STATE_JOG)
