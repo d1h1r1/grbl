@@ -79,7 +79,7 @@ int main(void)
     coolant_init();
     limits_init();
     probe_control_init();
-    laser_control_init();
+    // laser_control_init();
     tool_control_init();
     probe_init();
     sleep_init();
