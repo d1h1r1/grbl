@@ -74,7 +74,7 @@
 #define LIMIT_INT PCIE0 // 引脚更改中断使能引脚
 #define LIMIT_INT_vect PCINT0_vect
 #define LIMIT_PCMSK PCMSK0                                                                                                                                            // 引脚更改中断寄存器
-#define LIMIT_MASK ((1 << X_LIMIT_BIT) | (1 << Y_LIMIT_BIT) | (1 << Z_LIMIT_BIT) | (1 << A_LIMIT_BIT) | (1 << B_LIMIT_BIT) | (1 << C_LIMIT_BIT) | (1 << D_LIMIT_BIT)) // All limit bits
+#define LIMIT_MASK ((1 << X_LIMIT_BIT) | (1 << Y_LIMIT_BIT) | (1 << Z_LIMIT_BIT) | (1 << B_LIMIT_BIT) | (1 << C_LIMIT_BIT) | (1 << D_LIMIT_BIT)) // All limit bits
 
 // 定义主轴启用和主轴方向输出引脚。
 #define SPINDLE_ENABLE_DDR DDRH
@@ -110,8 +110,9 @@
 #define PROBE_DDR DDRJ
 #define PROBE_PIN PINJ
 #define PROBE_PORT PORTJ
-#define PROBE_BIT 0 // MEGA2560 Digital Pin 15
-#define PROBE_MASK (1 << PROBE_BIT)
+#define PROBE_BIT1 1 // MEGA2560 Digital Pin 14
+#define PROBE_BIT0 0 // MEGA2560 Digital Pin 15
+#define PROBE_MASK ((1 << PROBE_BIT0) | (1 << PROBE_BIT1))
 
 // 高级配置（下面的变量一般不需要修改）
 // 设置定时器以使用TIMER4B，连接到数字引脚7
