@@ -18,13 +18,13 @@ void return_tool()
   printInteger(settings.tool);
   printPgmString(PSTR("\r\n"));
   // 抬刀
-  gc_execute_line("G90G53G01Z-5F1000");
+  gc_execute_line("G90G53G0Z-5");
   if (settings.tool != 0)
   {
     // 移动到要还刀的xy位置
     float2string(settings.tool_x[settings.tool - 1], x_char, 3);
     float2string(settings.tool_y[settings.tool - 1], y_char, 3);
-    sprintf(command, "G90G53G01X%sY%sF1000", x_char, y_char);
+    sprintf(command, "G90G53G0X%sY%s", x_char, y_char);
     gc_execute_line(command);
     // 下降到还刀位置
     float2string(settings.tool_z[settings.tool - 1], z_char, 3);
@@ -33,7 +33,7 @@ void return_tool()
     // 松刀
     tool_home(1);
     // 抬刀
-    gc_execute_line("G90G53G01Z-5F1000");
+    gc_execute_line("G90G53G0Z-5");
   }
 }
 
@@ -42,7 +42,7 @@ void get_tool(uint8_t tool_number)
   // 移动取刀位置
   float2string(settings.tool_x[tool_number - 1], x_char, 3);
   float2string(settings.tool_y[tool_number - 1], y_char, 3);
-  sprintf(command, "G90G53G01X%sY%sF1000", x_char, y_char);
+  sprintf(command, "G90G53G0X%sY%s", x_char, y_char);
   gc_execute_line(command);
   // 下降到取刀位置
   float2string(settings.tool_z[tool_number - 1], z_char, 3);
@@ -52,7 +52,7 @@ void get_tool(uint8_t tool_number)
   delay_ms(100);
   tool_home(0);
   // 抬刀
-  gc_execute_line("G90G53G01Z-5F1000");
+  gc_execute_line("G90G53G0Z-5");
 }
 
 void change_tool(uint8_t tool_number)
@@ -66,14 +66,15 @@ void change_tool(uint8_t tool_number)
   {
     return_tool();
     get_tool(tool_number);
-    if (beforeTool == 0)
-    {
-      tool_length_zero();
-    }
-    else
-    {
-      set_tool_length();
-    }
+    set_tool_length();
+    // if (beforeTool == 0)
+    // {
+    //   tool_length_zero();
+    // }
+    // else
+    // {
+    //   set_tool_length();
+    // }
   }
   protocol_buffer_synchronize();
   // 将换完刀后刀号保存
