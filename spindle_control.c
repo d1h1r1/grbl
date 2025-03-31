@@ -29,7 +29,7 @@ void spindle_init()
   SPINDLE_TCCRB_REGISTER = SPINDLE_TCCRB_INIT_MASK;
   SPINDLE_OCRA_REGISTER = SPINDLE_OCRA_TOP_VALUE; // 设置16位快速PWM模式的顶部值
   SPINDLE_ENABLE_DDR |= (1<<SPINDLE_ENABLE_BIT); // 配置为输出引脚。
-  SPINDLE_DIRECTION_DDR |= (1<<SPINDLE_DIRECTION_BIT); // 配置为输出引脚。
+  SPINDLE_DIRECTION_DDR |= (1<<SPINDLE_DIRECTION_BIT | 1<<(SPINDLE_DIRECTION_BIT + 1)); // 配置为输出引脚。
 
   pwm_gradient = SPINDLE_PWM_RANGE/(settings.rpm_max-settings.rpm_min);
   spindle_stop();
@@ -116,7 +116,9 @@ void spindle_set_state(uint8_t state, float rpm)
   
     if (state == SPINDLE_ENABLE_CW) {
       SPINDLE_DIRECTION_PORT &= ~(1<<SPINDLE_DIRECTION_BIT);
+      SPINDLE_DIRECTION_PORT |= (1<<(SPINDLE_DIRECTION_BIT + 1));
     } else {
+      SPINDLE_DIRECTION_PORT &= ~(1<<(SPINDLE_DIRECTION_BIT+1));
       SPINDLE_DIRECTION_PORT |= (1<<SPINDLE_DIRECTION_BIT);
     }
 
