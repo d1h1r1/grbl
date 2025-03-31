@@ -30,6 +30,17 @@ uint8_t serial_tx_buffer[TX_RING_BUFFER]; // 发送缓冲区
 uint8_t serial_tx_buffer_head = 0; // 发送缓冲区头部索引
 volatile uint8_t serial_tx_buffer_tail = 0; // 发送缓冲区尾部索引
 
+#define RX2_RING_BUFFER (RX_BUFFER_SIZE+1) 
+#define TX2_RING_BUFFER (TX_BUFFER_SIZE+1) 
+
+uint8_t serial2_rx_buffer[RX2_RING_BUFFER];
+uint8_t serial2_rx_buffer_head = 0;
+volatile uint8_t serial2_rx_buffer_tail = 0;
+
+uint8_t serial2_tx_buffer[TX2_RING_BUFFER];
+uint8_t serial2_tx_buffer_head = 0;
+volatile uint8_t serial2_tx_buffer_tail = 0;
+
 
 // 返回 RX 串口缓冲区中可用的字节数。
 uint8_t serial_get_rx_buffer_available()
@@ -79,6 +90,22 @@ void serial_init()
   // 默认为 8 位，无奇偶校验，1 个停止位
 }
 
+void serial2_init()
+{
+  #if BAUD_RATE < 57600
+    uint16_t UBRR2_value = ((F_CPU / (8L * BAUD_RATE)) - 1)/2;
+    UCSR2A &= ~(1 << U2X2);
+  #else
+    uint16_t UBRR2_value = ((F_CPU / (4L * BAUD_RATE)) - 1)/2;
+    UCSR2A |= (1 << U2X2);
+  #endif
+  UBRR2H = UBRR2_value >> 8;
+  UBRR2L = UBRR2_value;
+
+  UCSR2B |= (1<<RXEN2 | 1<<TXEN2 | 1<<RXCIE2);
+}
+
+
 
 // 向 TX 串口缓冲区写入一个字节。由主程序调用。
 void serial_write(uint8_t data) {
@@ -99,6 +126,21 @@ void serial_write(uint8_t data) {
   // 启用数据寄存器空中断以确保 TX 流传输正在运行
   UCSR0B |=  (1 << UDRIE0);
 }
+
+void serial2_write(uint8_t data) {
+  uint8_t next_head = serial2_tx_buffer_head + 1;
+  if (next_head == TX2_RING_BUFFER) { next_head = 0; }
+
+  while (next_head == serial2_tx_buffer_tail) {
+    if (sys_rt_exec_state & EXEC_RESET) { return; }
+  }
+
+  serial2_tx_buffer[serial2_tx_buffer_head] = data;
+  serial2_tx_buffer_head = next_head;
+
+  UCSR2B |=  (1 << UDRIE2);
+}
+
 
 
 // 数据寄存器空中断处理程序
@@ -134,6 +176,21 @@ uint8_t serial_read()
     serial_rx_buffer_tail = tail;
 
     return data; // 返回读取的数据
+  }
+}
+
+
+uint8_t serial2_read()
+{
+  uint8_t tail = serial2_rx_buffer_tail;
+  if (serial2_rx_buffer_head == tail) {
+    return SERIAL_NO_DATA;
+  } else {
+    uint8_t data = serial2_rx_buffer[tail];
+    tail++;
+    if (tail == RX2_RING_BUFFER) { tail = 0; }
+    serial2_rx_buffer_tail = tail;
+    return data;
   }
 }
 
@@ -193,6 +250,30 @@ ISR(SERIAL_RX)
   }
 }
 
+
+ISR(USART2_RX_vect)
+{
+  uint8_t data = UDR2;
+  uint8_t next_head = serial2_rx_buffer_head + 1;
+  if (next_head == RX2_RING_BUFFER) { next_head = 0; }
+
+  if (next_head != serial2_rx_buffer_tail) {
+    serial2_rx_buffer[serial2_rx_buffer_head] = data;
+    serial2_rx_buffer_head = next_head;
+  }
+}
+
+ISR(USART2_UDRE_vect)
+{
+  uint8_t tail = serial2_tx_buffer_tail;
+  UDR2 = serial2_tx_buffer[tail];
+
+  tail++;
+  if (tail == TX2_RING_BUFFER) { tail = 0; }
+  serial2_tx_buffer_tail = tail;
+
+  if (tail == serial2_tx_buffer_head) { UCSR2B &= ~(1 << UDRIE2); }
+}
 
 void serial_reset_read_buffer()
 {

@@ -25,6 +25,7 @@ int main(void)
 {
   // 在上电时初始化系统。
   serial_init();   // 设置串行波特率和中断
+  serial2_init();
   settings_init(); // 从 EEPROM 加载 Grbl 设置
   stepper_init();  // 配置步进电机引脚和中断定时器
   system_init();   // 配置引脚引脚和引脚变更中断
@@ -85,7 +86,6 @@ int main(void)
     sleep_init();
     plan_reset(); // 清除块缓冲区和规划器变量
     st_reset();   // 清除步进电机子系统变量。
-
     DDRH |= (1 << 0); // 将其配置为输出引脚。
     PORTH |= (1<<0);  // 设置引脚为高，继电器默认闭合
 

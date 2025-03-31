@@ -21,6 +21,43 @@
 
 static float pwm_gradient; // 预先计算的值，用于加速转速到PWM的转换。
 
+uint16_t crc_chk_value(uint8_t *data_value, uint8_t length)
+{
+  uint16_t crc_value=0xFFFF;
+  int i; 
+  while(length--){ 
+    crc_value ^= *data_value++;
+    for(i=0;i<8;i++){ 
+      if(crc_value&0x0001){
+        crc_value=( crc_value>>1)^0xA001;
+      }else{
+        crc_value= crc_value>>1; 
+      }
+    }
+  }
+  return(crc_value); 
+}
+
+void float2Bytes(uint8_t bytes_temp[4],float float_variable){
+  union {
+    float a;
+    uint8_t bytes[4];
+  } thing;
+  thing.a = float_variable;
+  memcpy(bytes_temp, thing.bytes, 4);
+}
+
+void control485(uint8_t *sendData){
+    uint8_t bytes[2];
+    uint16_t value = crc_chk_value(sendData, 6);
+    memcpy(bytes, &value, sizeof(value));
+    for(uint8_t i=0; i < 6; i++){
+      serial2_write(sendData[i]);
+    }
+    serial2_write(bytes[0]);
+    serial2_write(bytes[1]);
+}
+
 void spindle_init()
 {
   // 配置可变主轴PWM和使能引脚（如需要）。
@@ -54,6 +91,9 @@ uint8_t spindle_get_state()
 // 由 spindle_init()、spindle_set_speed()、spindle_set_state() 和 mc_reset() 调用。
 void spindle_stop()
 {
+  // 发送485停机指令
+  uint8_t sendData = {0x01, 0x06, 0x13, 0x00, 0x00, 0x00};
+  control485(sendData);
   SPINDLE_TCCRA_REGISTER &= ~(1<<SPINDLE_COMB_BIT); // 禁用PWM。输出电压为零。
   #ifdef INVERT_SPINDLE_ENABLE_PIN
     SPINDLE_ENABLE_PORT |= (1<<SPINDLE_ENABLE_BIT);  // 设置引脚为高
@@ -108,16 +148,22 @@ void spindle_set_state(uint8_t state, float rpm)
 {
   if (sys.abort) { return; } // 在中止期间阻塞。
   if (state == SPINDLE_DISABLE) { // 停止或设置主轴方向和转速。
-  
     sys.spindle_speed = 0.0;
     spindle_stop();
   
   } else {
-  
     if (state == SPINDLE_ENABLE_CW) {
+      // 发送485顺时针正转指令
+      uint8_t sendData = {0x01, 0x06, 0x13, 0x00, 0x00, 0x01};
+      control485(sendData);
+
       SPINDLE_DIRECTION_PORT &= ~(1<<SPINDLE_DIRECTION_BIT);
       SPINDLE_DIRECTION_PORT |= (1<<(SPINDLE_DIRECTION_BIT + 1));
     } else {
+      // 发送485逆时针反转指令
+      uint8_t sendData = {0x01, 0x06, 0x13, 0x00, 0x00, 0x02};
+      control485(sendData);
+
       SPINDLE_DIRECTION_PORT &= ~(1<<(SPINDLE_DIRECTION_BIT+1));
       SPINDLE_DIRECTION_PORT |= (1<<SPINDLE_DIRECTION_BIT);
     }
@@ -126,6 +172,13 @@ void spindle_set_state(uint8_t state, float rpm)
     if (settings.flags & BITFLAG_LASER_MODE) { 
       if (state == SPINDLE_ENABLE_CCW) { rpm = 0.0; } // TODO: 可能需要 rpm_min*(100/MAX_SPINDLE_SPEED_OVERRIDE);
     }
+    // 485转速控制
+    uint16_t hz = rpm / 60 * 100;
+    uint8_t bytes[2];
+    memcpy(bytes, &hz, sizeof(hz));
+    uint8_t sendData = {0x01, 0x06, 0x13, 0x01, bytes[0], bytes[1]};
+    control485(sendData);
+
     spindle_set_speed(spindle_compute_pwm_value(rpm));
 
 		#ifdef INVERT_SPINDLE_ENABLE_PIN
@@ -133,9 +186,7 @@ void spindle_set_state(uint8_t state, float rpm)
 		#else
 			SPINDLE_ENABLE_PORT |= (1<<SPINDLE_ENABLE_BIT);
 		#endif   
-  
   }
-  
   sys.report_ovr_counter = 0; // 设置为立即报告更改
 }
 

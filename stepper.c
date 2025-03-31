@@ -746,7 +746,6 @@ void st_prep_buffer()
     // 确定是否需要加载一个新的规划块，或者是否需要重新计算该块。
     if (pl_block == NULL)
     {
-
       // 查询规划器以获取排队的块
       if (sys.step_control & STEP_CONTROL_EXECUTE_SYS_MOTION)
       {
