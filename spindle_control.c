@@ -56,6 +56,7 @@ void control485(uint8_t *sendData){
     }
     serial2_write(bytes[0]);
     serial2_write(bytes[1]);
+    delay_ms(50);
 }
 
 void spindle_init()
@@ -153,21 +154,20 @@ void spindle_set_state(uint8_t state, float rpm)
   
   } else {
     if (state == SPINDLE_ENABLE_CW) {
-      // 发送485顺时针正转指令
-      uint8_t sendData[] = {0x01, 0x06, 0x13, 0x00, 0x00, 0x01};
+      // 发送485顺时针反转指令
+      uint8_t sendData[] = {0x01, 0x06, 0x13, 0x00, 0x00, 0x02};
       control485(sendData);
 
       SPINDLE_DIRECTION_PORT &= ~(1<<SPINDLE_DIRECTION_BIT);
       SPINDLE_DIRECTION_PORT |= (1<<(SPINDLE_DIRECTION_BIT + 1));
     } else {
-      // 发送485逆时针反转指令
-      uint8_t sendData[] = {0x01, 0x06, 0x13, 0x00, 0x00, 0x02};
+      // 发送485逆时针正转指令
+      uint8_t sendData[] = {0x01, 0x06, 0x13, 0x00, 0x00, 0x01};
       control485(sendData);
 
       SPINDLE_DIRECTION_PORT &= ~(1<<(SPINDLE_DIRECTION_BIT+1));
       SPINDLE_DIRECTION_PORT |= (1<<SPINDLE_DIRECTION_BIT);
     }
-
     // 注意：假设所有调用此函数的时机都是当Grbl不在移动或必须保持关闭状态。
     if (settings.flags & BITFLAG_LASER_MODE) { 
       if (state == SPINDLE_ENABLE_CCW) { rpm = 0.0; } // TODO: 可能需要 rpm_min*(100/MAX_SPINDLE_SPEED_OVERRIDE);

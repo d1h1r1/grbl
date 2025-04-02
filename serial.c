@@ -92,13 +92,19 @@ void serial_init()
 
 void serial2_init()
 {
-  #if BAUD_RATE < 57600
-    uint16_t UBRR2_value = ((F_CPU / (8L * BAUD_RATE)) - 1)/2;
-    UCSR2A &= ~(1 << U2X2);
-  #else
-    uint16_t UBRR2_value = ((F_CPU / (4L * BAUD_RATE)) - 1)/2;
-    UCSR2A |= (1 << U2X2);
-  #endif
+  // #if BAUD_RATE < 57600
+  //   uint16_t UBRR2_value = ((F_CPU / (8L * BAUD_RATE)) - 1)/2;
+  //   UCSR2A &= ~(1 << U2X2);
+  // #else
+  //   uint16_t UBRR2_value = ((F_CPU / (4L * BAUD_RATE)) - 1)/2;
+  //   UCSR2A |= (1 << U2X2);
+  // #endif
+  uint16_t UBRR2_value = ((F_CPU / (8L * 9600)) - 1)/2;
+  UCSR2A &= ~(1 << U2X2);
+
+  // uint16_t UBRR2_value = ((F_CPU / (4L * 115200)) - 1)/2;
+  // UCSR2A |= (1 << U2X2);
+
   UBRR2H = UBRR2_value >> 8;
   UBRR2L = UBRR2_value;
 
