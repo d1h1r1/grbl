@@ -300,6 +300,8 @@ void report_probe_parameters()
   report_util_axis_values(print_position);
   serial_write(':');
   print_uint8_base10(sys.probe_succeeded);
+  serial_write(',');
+  printFloat_CoordValue(settings.tool_zpos);
   report_util_feedback_line_feed();
 }
 
