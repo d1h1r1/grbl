@@ -10,6 +10,10 @@ void tool_control_init()
   // 换刀限位
   DDRL &= ~((1 << 6) | (1 << 7)); // 设置为输入引脚
   PORTL |= ((1 << 6) | (1 << 7)); // 启用内部上拉电阻。正常高操作。
+
+  // 换刀检测
+  DDRD &= ~(1 << 7); // 设置为输入引脚
+  PORTD |= (1 << 7); // 启用内部上拉电阻。正常高操作。
 }
 
 void return_tool()
@@ -35,6 +39,15 @@ void return_tool()
     // 抬刀
     gc_execute_line("G90G53G0Z-5");
   }
+}
+
+void getToolStatus(){
+  printPgmString(PSTR("[换刀状态: "));
+  uint8_t status = PIND & (1 << 7);
+  print_uint8_base10((PIND & (1 << 7)) ? 1 : 0);
+  printPgmString(PSTR("]"));
+  printPgmString(PSTR("\r\n"));
+  return 0;
 }
 
 void get_tool(uint8_t tool_number)

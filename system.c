@@ -157,6 +157,9 @@ uint8_t system_execute_line(char *line)
   case 'E':
     tool_length_zero();
     break;
+  case 'F':
+    getToolStatus();
+    break;
   case 'T':
     report_tool();
     break;
