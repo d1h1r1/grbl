@@ -139,11 +139,11 @@ void tool_home(uint8_t flag)
     // 注意：这样编译出来的代码比尝试过的任何其他实现都要小。
     if (flag)
     {
-      target[idx] = -max_travel;
+      target[idx] = max_travel;
     }
     else
     {
-      target[idx] = max_travel;
+      target[idx] = -max_travel;
     }
     // 将轴锁应用于本循环中活动的步进端口引脚。
     axislock |= step_pin[idx];
@@ -163,11 +163,11 @@ void tool_home(uint8_t flag)
     // 检查限位状态。当它们发生变化时锁定循环轴。
     if (flag)
     {
-      limit_state = PINL & (1 << 6);
+      limit_state = ~PINL & (1 << 6);
     }
     else
     {
-      limit_state = PINL & (1 << 7);
+      limit_state = ~PINL & (1 << 7);
     }
     if (axislock & step_pin[idx])
     {
