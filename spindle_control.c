@@ -93,7 +93,7 @@ uint8_t spindle_get_state()
 void spindle_stop()
 {
   // 发送485停机指令
-  uint8_t sendData[] = {0x01, 0x06, 0x13, 0x00, 0x00, 0x00};
+  uint8_t sendData[] = {0x01, 0x06, 0x20, 0x00, 0x00, 0x05};
   control485(sendData);
   SPINDLE_TCCRA_REGISTER &= ~(1<<SPINDLE_COMB_BIT); // 禁用PWM。输出电压为零。
   #ifdef INVERT_SPINDLE_ENABLE_PIN
@@ -155,14 +155,14 @@ void spindle_set_state(uint8_t state, float rpm)
   } else {
     if (state == SPINDLE_ENABLE_CW) {
       // 发送485顺时针反转指令
-      uint8_t sendData[] = {0x01, 0x06, 0x13, 0x00, 0x00, 0x02};
+      uint8_t sendData[] = {0x01, 0x06, 0x20, 0x00, 0x00, 0x02};
       control485(sendData);
 
       SPINDLE_DIRECTION_PORT &= ~(1<<SPINDLE_DIRECTION_BIT);
       SPINDLE_DIRECTION_PORT |= (1<<(SPINDLE_DIRECTION_BIT + 1));
     } else {
       // 发送485逆时针正转指令
-      uint8_t sendData[] = {0x01, 0x06, 0x13, 0x00, 0x00, 0x01};
+      uint8_t sendData[] = {0x01, 0x06, 0x20, 0x00, 0x00, 0x01};
       control485(sendData);
 
       SPINDLE_DIRECTION_PORT &= ~(1<<(SPINDLE_DIRECTION_BIT+1));
@@ -176,7 +176,7 @@ void spindle_set_state(uint8_t state, float rpm)
     uint16_t hz = rpm / 60 * 100;
     uint8_t bytes[2];
     memcpy(bytes, &hz, sizeof(hz));
-    uint8_t sendData[] = {0x01, 0x06, 0x13, 0x01, bytes[1], bytes[0]};
+    uint8_t sendData[] = {0x01, 0x06, 0x00, 0x08, bytes[1], bytes[0]};
     control485(sendData);
 
     spindle_set_speed(spindle_compute_pwm_value(rpm));
