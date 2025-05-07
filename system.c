@@ -148,12 +148,12 @@ uint8_t system_execute_line(char *line)
   case 'V':
     set_probe(0);
     break;
-  case 'A':
-    set_laser(0);
-    break;
-  case 'B':
-    set_laser(1);
-    break;
+  // case 'A':
+  //   set_laser(0);
+  //   break;
+  // case 'B':
+  //   set_laser(1);
+  //   break;
   case 'E':
     tool_length_zero();
     break;
