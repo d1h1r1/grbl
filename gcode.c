@@ -953,7 +953,6 @@ uint8_t gc_execute_line(char *line)
         // [G2/3 偏移模式错误]：在选定平面中无轴字和/或偏移。当前点和目标点的半径相差超过 0.002mm（EMC 定义为 0.5mm 或 0.005mm 和 0.1% 半径）。
         // [G2/3 完全圆模式错误]：不支持。存在轴字。未编程偏移。P 必须为整数。
         // 注意：半径和偏移量都用于圆弧跟踪，并在错误检查时预先计算。
-
         if (!axis_words)
         {
           FAIL(STATUS_GCODE_NO_AXIS_WORDS);
@@ -967,7 +966,10 @@ uint8_t gc_execute_line(char *line)
         float x, y;
         x = gc_block.values.xyz[axis_0] - gc_state.position[axis_0]; // 当前位置与目标之间的 x 位移
         y = gc_block.values.xyz[axis_1] - gc_state.position[axis_1]; // 当前位置与目标之间的 y 位移
-
+        // printFloat(x,3);
+        // printPgmString(PSTR("\r\n"));
+        // printFloat(y,3);
+        // printPgmString(PSTR("\r\n"));
         if (value_words & bit(WORD_R))
         { // 圆弧半径模式
           bit_false(value_words, bit(WORD_R));
@@ -1096,7 +1098,6 @@ uint8_t gc_execute_line(char *line)
 
           // 计算 mc_arc 的弧半径。从当前位置到圆心的定义。
           gc_block.values.r = hypot_f(gc_block.values.ijk[axis_0], gc_block.values.ijk[axis_1]);
-
           // 计算当前位置和目标半径之间的差异，以进行最终错误检查。
           float delta_r = fabs(target_r - gc_block.values.r);
           if (delta_r > 0.005)
@@ -1421,6 +1422,10 @@ uint8_t gc_execute_line(char *line)
       }
       else if ((gc_state.modal.motion == MOTION_MODE_CW_ARC) || (gc_state.modal.motion == MOTION_MODE_CCW_ARC))
       {
+        printFloat(gc_block.values.xyz,3);
+        printPgmString(PSTR("\r\n"));
+        printFloat(target_r,3);
+        printPgmString(PSTR("\r\n"));
         mc_arc(gc_block.values.xyz, pl_data, gc_state.position, gc_block.values.ijk, gc_block.values.r,
                axis_0, axis_1, axis_linear, bit_istrue(gc_parser_flags, GC_PARSER_ARC_IS_CLOCKWISE));
       }
