@@ -1422,10 +1422,12 @@ uint8_t gc_execute_line(char *line)
       }
       else if ((gc_state.modal.motion == MOTION_MODE_CW_ARC) || (gc_state.modal.motion == MOTION_MODE_CCW_ARC))
       {
-        printFloat(gc_block.values.xyz,3);
+        printFloat(gc_block.values.xyz[0],3);
         printPgmString(PSTR("\r\n"));
-        printFloat(target_r,3);
+        printFloat(gc_block.values.xyz[1],3);
         printPgmString(PSTR("\r\n"));
+        printFloat(gc_block.values.xyz[2],3);
+        printPgmString(PSTR("\r\n===========\r\n"));
         mc_arc(gc_block.values.xyz, pl_data, gc_state.position, gc_block.values.ijk, gc_block.values.r,
                axis_0, axis_1, axis_linear, bit_istrue(gc_parser_flags, GC_PARSER_ARC_IS_CLOCKWISE));
       }
