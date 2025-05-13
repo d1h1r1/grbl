@@ -110,7 +110,7 @@
 #define PROBE_DDR DDRJ
 #define PROBE_PIN PINJ
 #define PROBE_PORT PORTJ
-#define PROBE_BIT1 1 // MEGA2560 Digital Pin 14
+#define PROBE_BIT1 0 // MEGA2560 Digital Pin 14
 #define PROBE_BIT0 0 // MEGA2560 Digital Pin 15
 #define PROBE_MASK ((1 << PROBE_BIT0) | (1 << PROBE_BIT1))
 

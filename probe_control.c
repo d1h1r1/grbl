@@ -2,12 +2,12 @@
 
 void close_all_relay()
 {
-    PORTL &= ~((1 << 4) | (1 << 3)); // 低电平
+    PORTL &= ~((1 << 2) | (1 << 3)); // 低电平
 }
 
 void open_all_relay()
 {
-    PORTL |= ((1 << 4) | (1 << 3)); // 高电平
+    PORTL |= ((1 << 2) | (1 << 3)); // 高电平
 }
 
 void probe_control_init()
@@ -16,21 +16,21 @@ void probe_control_init()
     DDRL &= ~((1 << 1) | 1); // 设置为输入引脚
     PORTL |= ((1 << 1) | 1); // 启用内部上拉电阻。正常高操作。
     // 输出控制
-    DDRL |= ((1 << 4) | (1 << 3)); // 将其配置为输出引脚。
+    DDRL |= ((1 << 2) | (1 << 3)); // 将其配置为输出引脚。
 
-    close_all_relay();
-    // open_all_relay();
+    // close_all_relay();
+    open_all_relay();
 }
 
 void up_relay(uint8_t flag)
 {
     if (flag)
     {
-        PORTL |= (1 << 4);
+        PORTL |= (1 << 2);
     }
     else
     {
-        PORTL &= ~(1 << 4);
+        PORTL &= ~(1 << 2);
     }
 }
 
@@ -104,11 +104,11 @@ void set_probe(uint8_t flag)
         // 注意：这样编译出来的代码比尝试过的任何其他实现都要小。
         if (flag)
         {
-            target[idx] = -max_travel;
+            target[idx] = max_travel;
         }
         else
         {
-            target[idx] = max_travel;
+            target[idx] = -max_travel;
         }
         // 将轴锁应用于本循环中活动的步进端口引脚。
         axislock |= step_pin[idx];
@@ -128,11 +128,11 @@ void set_probe(uint8_t flag)
         // 检查限位状态。当它们发生变化时锁定循环轴。
         if (flag)
         {
-            limit_state = PINL & 1;
+            limit_state = ~PINL & 1;
         }
         else
         {
-            limit_state = PINL & (1 << 1);
+            limit_state = ~PINL & (1 << 1);
         }
         if (axislock & step_pin[idx])
         {

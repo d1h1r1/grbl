@@ -116,7 +116,7 @@ uint8_t limits_get_state()
       if (!(sys_rt_exec_alarm)) {
         // 检查限位引脚状态。 
         uint8_t limit_state = limits_get_state();
-        // limit_state = limit_state & 0xF7;
+        limit_state = limit_state & 0xBF;
         if (limit_state) {
             mc_reset(); // 发起系统终止。
             print_uint8_base2_ndigit(limit_state, 8);
