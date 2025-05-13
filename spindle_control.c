@@ -67,7 +67,7 @@ void spindle_init()
   SPINDLE_TCCRB_REGISTER = SPINDLE_TCCRB_INIT_MASK;
   SPINDLE_OCRA_REGISTER = SPINDLE_OCRA_TOP_VALUE; // 设置16位快速PWM模式的顶部值
   SPINDLE_ENABLE_DDR |= (1<<SPINDLE_ENABLE_BIT); // 配置为输出引脚。
-  SPINDLE_DIRECTION_DDR |= (1<<SPINDLE_DIRECTION_BIT | 1<<(SPINDLE_DIRECTION_BIT + 1)); // 配置为输出引脚。
+  // SPINDLE_DIRECTION_DDR |= (1<<SPINDLE_DIRECTION_BIT | 1<<(SPINDLE_DIRECTION_BIT + 1)); // 配置为输出引脚。
 
   pwm_gradient = SPINDLE_PWM_RANGE/(settings.rpm_max-settings.rpm_min);
   spindle_stop();
@@ -158,25 +158,25 @@ void spindle_set_state(uint8_t state, float rpm)
       uint8_t sendData[] = {0x01, 0x06, 0x20, 0x00, 0x00, 0x02};
       control485(sendData);
 
-      SPINDLE_DIRECTION_PORT &= ~(1<<SPINDLE_DIRECTION_BIT);
-      SPINDLE_DIRECTION_PORT |= (1<<(SPINDLE_DIRECTION_BIT + 1));
+      // SPINDLE_DIRECTION_PORT &= ~(1<<SPINDLE_DIRECTION_BIT);
+      // SPINDLE_DIRECTION_PORT |= (1<<(SPINDLE_DIRECTION_BIT + 1));
     } else {
       // 发送485逆时针正转指令
       uint8_t sendData[] = {0x01, 0x06, 0x20, 0x00, 0x00, 0x01};
       control485(sendData);
 
-      SPINDLE_DIRECTION_PORT &= ~(1<<(SPINDLE_DIRECTION_BIT+1));
-      SPINDLE_DIRECTION_PORT |= (1<<SPINDLE_DIRECTION_BIT);
+      // SPINDLE_DIRECTION_PORT &= ~(1<<(SPINDLE_DIRECTION_BIT+1));
+      // SPINDLE_DIRECTION_PORT |= (1<<SPINDLE_DIRECTION_BIT);
     }
     // 注意：假设所有调用此函数的时机都是当Grbl不在移动或必须保持关闭状态。
     if (settings.flags & BITFLAG_LASER_MODE) { 
       if (state == SPINDLE_ENABLE_CCW) { rpm = 0.0; } // TODO: 可能需要 rpm_min*(100/MAX_SPINDLE_SPEED_OVERRIDE);
     }
     // 485转速控制
-    uint16_t hz = rpm / 60 * 100;
+    uint16_t hz = rpm / 60;
     uint8_t bytes[2];
     memcpy(bytes, &hz, sizeof(hz));
-    uint8_t sendData[] = {0x01, 0x06, 0x00, 0x08, bytes[1], bytes[0]};
+    uint8_t sendData[] = {0x01, 0x06, 0xF0, 0x08, bytes[1], bytes[0]};
     control485(sendData);
 
     spindle_set_speed(spindle_compute_pwm_value(rpm));
