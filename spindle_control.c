@@ -173,7 +173,7 @@ void spindle_set_state(uint8_t state, float rpm)
       if (state == SPINDLE_ENABLE_CCW) { rpm = 0.0; } // TODO: 可能需要 rpm_min*(100/MAX_SPINDLE_SPEED_OVERRIDE);
     }
     // 485转速控制
-    uint16_t hz = rpm / 60;
+    uint16_t hz = rpm / 6;
     uint8_t bytes[2];
     memcpy(bytes, &hz, sizeof(hz));
     uint8_t sendData[] = {0x01, 0x06, 0xF0, 0x08, bytes[1], bytes[0]};

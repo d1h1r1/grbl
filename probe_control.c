@@ -128,11 +128,11 @@ void set_probe(uint8_t flag)
         // 检查限位状态。当它们发生变化时锁定循环轴。
         if (flag)
         {
-            limit_state = PINL & 1;
+            limit_state = ~PINL & 1;
         }
         else
         {
-            limit_state = PINL & (1 << 1);
+            limit_state = ~PINL & (1 << 1);
         }
         if (axislock & step_pin[idx])
         {
