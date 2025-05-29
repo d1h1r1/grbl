@@ -136,12 +136,12 @@ uint8_t system_execute_line(char *line)
   case 0:
     report_grbl_help();
     break; // 显示 Grbl 帮助
-  case 'D':
-    tool_home(1);
-    break; // 松刀
-  case 'U':
-    tool_home(0);
-    break; // 紧刀
+  // case 'D':
+  //   tool_home(1);
+  //   break; // 松刀
+  // case 'U':
+  //   tool_home(0);
+  //   break; // 紧刀
   case 'P':
     set_probe(1);
     break;
