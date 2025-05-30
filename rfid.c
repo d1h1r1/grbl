@@ -30,17 +30,6 @@ uint8_t serial_tx_buffer[TX_RING_BUFFER]; // 发送缓冲区
 uint8_t serial_tx_buffer_head = 0; // 发送缓冲区头部索引
 volatile uint8_t serial_tx_buffer_tail = 0; // 发送缓冲区尾部索引
 
-#define RX1_RING_BUFFER (RX_BUFFER_SIZE+1) 
-#define TX1_RING_BUFFER (TX_BUFFER_SIZE+1) 
-
-uint8_t serial1_rx_buffer[RX1_RING_BUFFER];
-uint8_t serial1_rx_buffer_head = 0;
-volatile uint8_t serial1_rx_buffer_tail = 0;
-
-uint8_t serial1_tx_buffer[TX1_RING_BUFFER];
-uint8_t serial1_tx_buffer_head = 0;
-volatile uint8_t serial1_tx_buffer_tail = 0;
-
 #define RX2_RING_BUFFER (RX_BUFFER_SIZE+1) 
 #define TX2_RING_BUFFER (TX_BUFFER_SIZE+1) 
 
@@ -101,27 +90,6 @@ void serial_init()
   // 默认为 8 位，无奇偶校验，1 个停止位
 }
 
-void serial1_init()
-{
-  // #if BAUD_RATE < 57600
-  //   uint16_t UBRR2_value = ((F_CPU / (8L * BAUD_RATE)) - 1)/2;
-  //   UCSR2A &= ~(1 << U2X2);
-  // #else
-  //   uint16_t UBRR2_value = ((F_CPU / (4L * BAUD_RATE)) - 1)/2;
-  //   UCSR2A |= (1 << U2X2);
-  // #endif
-  uint16_t UBRR1_value = ((F_CPU / (8L * 57600)) - 1)/2;
-  UCSR1A &= ~(1 << U2X2);
-
-  // uint16_t UBRR2_value = ((F_CPU / (4L * 115200)) - 1)/2;
-  // UCSR2A |= (1 << U2X2);
-
-  UBRR1H = UBRR1_value >> 8;
-  UBRR1L = UBRR1_value;
-
-  UCSR1B |= (1<<RXEN1 | 1<<TXEN1 | 1<<RXCIE1);
-}
-
 void serial2_init()
 {
   // #if BAUD_RATE < 57600
@@ -163,20 +131,6 @@ void serial_write(uint8_t data) {
 
   // 启用数据寄存器空中断以确保 TX 流传输正在运行
   UCSR0B |=  (1 << UDRIE0);
-}
-
-void serial1_write(uint8_t data) {
-  uint8_t next_head = serial1_tx_buffer_head + 1;
-  if (next_head == TX1_RING_BUFFER) { next_head = 0; }
-
-  while (next_head == serial1_tx_buffer_tail) {
-    if (sys_rt_exec_state & EXEC_RESET) { return; }
-  }
-
-  serial1_tx_buffer[serial1_tx_buffer_head] = data;
-  serial1_tx_buffer_head = next_head;
-
-  UCSR1B |=  (1 << UDRIE1);
 }
 
 void serial2_write(uint8_t data) {
@@ -231,19 +185,6 @@ uint8_t serial_read()
   }
 }
 
-uint8_t serial1_read()
-{
-  uint8_t tail = serial1_rx_buffer_tail;
-  if (serial1_rx_buffer_head == tail) {
-    return SERIAL_NO_DATA;
-  } else {
-    uint8_t data = serial1_rx_buffer[tail];
-    tail++;
-    if (tail == RX1_RING_BUFFER) { tail = 0; }
-    serial1_rx_buffer_tail = tail;
-    return data;
-  }
-}
 
 uint8_t serial2_read()
 {
@@ -315,34 +256,6 @@ ISR(SERIAL_RX)
   }
 }
 
-ISR(USART1_RX_vect)
-{
-  uint8_t data = UDR1;
-  uint8_t next_head = serial1_rx_buffer_head + 1;
-  if (next_head == RX1_RING_BUFFER) { next_head = 0; }
-
-  if (next_head != serial1_rx_buffer_tail) {
-    serial1_rx_buffer[serial1_rx_buffer_head] = data;
-    serial1_rx_buffer_head = next_head;
-  }
-}
-
-ISR(USART1_UDRE_vect)
-{
-  uint8_t tail = serial1_tx_buffer_tail;
-  UDR1 = serial1_tx_buffer[tail];
-
-  tail++;
-  if (tail == TX1_RING_BUFFER) { tail = 0; }
-  serial1_tx_buffer_tail = tail;
-
-  if (tail == serial1_tx_buffer_head) { UCSR1B &= ~(1 << UDRIE1); }
-}
-
-void serial_reset_read_buffer()
-{
-  serial_rx_buffer_tail = serial_rx_buffer_head; // 重置读取缓冲区
-}
 
 ISR(USART2_RX_vect)
 {
