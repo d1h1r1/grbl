@@ -30,10 +30,13 @@ int main(void)
   settings_init(); // 从 EEPROM 加载 Grbl 设置
   stepper_init();  // 配置步进电机引脚和中断定时器
   system_init();   // 配置引脚引脚和引脚变更中断
-  while (1)
-  {
-    /* code */
-  }
+
+  // uint8_t data[25] = {0xAA, 0x11, 0x25, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x04, 0x18, 0x00, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x55};
+  // for(uint8_t i=0; i < sizeof(data); i++){
+  //   serial1_write(data[i]);
+  // }
+
+  
   
   // memset(sys_position, 0, sizeof(sys_position)); // 清除机器位置。
   sei(); // 启用中断
@@ -99,7 +102,17 @@ int main(void)
     gc_sync_position();
     // 打印欢迎消息。指示在上电或重置时发生了初始化。
     report_init_message();
-
+    while (1)
+    {
+      uint8_t data[25] = {0xAA, 0x11, 0x25, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x04, 0x18, 0x00, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x55};
+      for(uint8_t i=0; i < sizeof(data); i++){
+        serial1_write(data[i]);
+      }
+      delay_ms(1000);
+      uint8_t get = serial1_read();
+      serial_write(get);
+      delay_ms(1000);
+    }
     // 启动 Grbl 主循环。处理程序输入并执行它们。
     protocol_main_loop();
   }

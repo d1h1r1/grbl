@@ -29,14 +29,17 @@
 #define SERIAL_NO_DATA 0xff
 
 void serial_init();
+void serial1_init();
 void serial2_init();
 
 // 将一个字节写入 TX 串口缓冲区。由主程序调用。
 void serial_write(uint8_t data);
 void serial2_write(uint8_t data);
+void serial1_write(uint8_t data);
 
 // 获取串口读取缓冲区中的第一个字节。由主程序调用。
 uint8_t serial_read();
+uint8_t serial1_read();
 uint8_t serial2_read();
 
 // 重置并清空读取缓冲区中的数据。由急停和重置使用。

@@ -339,11 +339,6 @@ ISR(USART1_UDRE_vect)
   if (tail == serial1_tx_buffer_head) { UCSR1B &= ~(1 << UDRIE1); }
 }
 
-void serial_reset_read_buffer()
-{
-  serial_rx_buffer_tail = serial_rx_buffer_head; // 重置读取缓冲区
-}
-
 ISR(USART2_RX_vect)
 {
   uint8_t data = UDR2;
