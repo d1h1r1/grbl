@@ -23,6 +23,7 @@
 #define HOMING_CYCLE_X    bit(X_AXIS)
 #define HOMING_CYCLE_Y    bit(Y_AXIS)
 #define HOMING_CYCLE_Z    bit(Z_AXIS)
+#define HOMING_CYCLE_A    bit(A_AXIS)
 
 // 在绝对毫米坐标系中执行线性运动。进给速率以毫米/秒为单位，
 // 除非 invert_feed_rate 为真。此时，feed_rate 意味着运动应在

@@ -160,8 +160,16 @@ void protocol_main_loop()
       // 检查是否满足休眠条件，并在超时时执行自动停放。
       sleep_check();    
     #endif
-    // float temp = ds18b20_read_temp();
-    // printFloat(temp, 3);
+    // uint8_t level = ReadFiltered();
+    // print_uint8_base10(level);
+    // printString("\n");
+    // float temp = ds18b20_read_temp_timer2();
+    // // float temp = ds18b20_read_temp();
+    // if (temp != 0) {
+    //   printFloat(temp, 3);
+    //   printString("\n");
+    // }
+    
   }
 
   return; /* 永远不会达到此点 */

@@ -7,6 +7,11 @@
 #define DS18B20_PIN  PINE
 #define DS18B20_BIT  3
 
+volatile bool tempConversionDone = false;
+volatile uint16_t tempConversionCounter = 0;
+static bool conversionStarted = false;
+
+
 // 设置为输出
 void onewire_output() {
     DS18B20_DDR |= (1 << DS18B20_BIT);
@@ -84,11 +89,11 @@ float ds18b20_read_temp() {
     uint8_t temp_l, temp_h;
     int16_t temp;
     
-    if (!onewire_reset()) return -1000;  // 无响应
+    if (!onewire_reset()) return -1;  // 无响应
 
     onewire_write_byte(0xCC);  // Skip ROM
     onewire_write_byte(0x44);  // Convert T
-    _delay_ms(750);            // 等待转换
+    _delay_ms(500);            // 等待转换
 
     onewire_reset();
     onewire_write_byte(0xCC);  // Skip ROM
@@ -97,6 +102,50 @@ float ds18b20_read_temp() {
     temp_l = onewire_read_byte();
     temp_h = onewire_read_byte();
     temp = (temp_h << 8) | temp_l;
-
     return temp / 16.0;  // 每位代表0.0625℃
+}
+
+
+void time2_init() {
+    // 配置 Timer2（8位定时器，CTC模式，64分频）
+    TCCR2A = (1 << WGM21);  // CTC模式
+    TCCR2B = (1 << CS22);   // 64分频（16MHz / 64 = 250kHz）
+    OCR2A = 249;            // 1ms = (250kHz / 250) - 1
+    TIMSK2 = (1 << OCIE2A); // 启用比较匹配中断
+    sei();                  // 启用全局中断
+}
+
+
+ISR(TIMER2_COMPA_vect) {
+    if (tempConversionCounter < 5000) {  // 500ms = 500 * 1ms
+        tempConversionCounter++;
+    } else {
+        tempConversionDone = true;
+        conversionStarted = false;
+        tempConversionCounter = 0;
+    }
+}
+
+float ds18b20_read_temp_timer2() {
+    if (!conversionStarted) {
+        if (!onewire_reset()) return 0;
+        onewire_write_byte(0xCC);  // Skip ROM
+        onewire_write_byte(0x44);  // Convert T
+        conversionStarted = true;
+        return 0;
+    }
+
+    if (tempConversionDone) {
+        onewire_reset();
+        onewire_write_byte(0xCC);  // Skip ROM
+        onewire_write_byte(0xBE);  // Read Scratchpad
+        uint8_t temp_l = onewire_read_byte();
+        uint8_t temp_h = onewire_read_byte();
+        int16_t temp = (temp_h << 8) | temp_l;
+        conversionStarted = false;
+        tempConversionDone = false;
+        return temp / 16.0;
+    }
+
+    return 0;  // 等待中
 }
