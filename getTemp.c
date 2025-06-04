@@ -1,5 +1,4 @@
 #include "grbl.h"
-#include "getTemp.h"
 
 // DS18B20连接在 PE0（数字0）
 #define DS18B20_DDR  DDRE
@@ -11,6 +10,7 @@ volatile bool tempConversionDone = false;
 volatile uint16_t tempConversionCounter = 0;
 static bool conversionStarted = false;
 
+all_temp temp_obj;
 
 // 设置为输出
 void onewire_output() {
@@ -20,6 +20,7 @@ void onewire_output() {
 // 设置为输入（释放总线）
 void onewire_input() {
     DS18B20_DDR &= ~(1 << DS18B20_BIT);
+    DS18B20_PORT |= (1 << DS18B20_BIT); // 启用内部上拉
 }
 
 // 写0或1
@@ -93,7 +94,7 @@ float ds18b20_read_temp() {
 
     onewire_write_byte(0xCC);  // Skip ROM
     onewire_write_byte(0x44);  // Convert T
-    _delay_ms(500);            // 等待转换
+    _delay_ms(750);            // 等待转换
 
     onewire_reset();
     onewire_write_byte(0xCC);  // Skip ROM
@@ -102,7 +103,8 @@ float ds18b20_read_temp() {
     temp_l = onewire_read_byte();
     temp_h = onewire_read_byte();
     temp = (temp_h << 8) | temp_l;
-    return temp / 16.0;  // 每位代表0.0625℃
+    // printFloat(temp * 0.0625, 3);
+    return temp * 0.0625;  // 每位代表0.0625℃
 }
 
 
@@ -144,6 +146,8 @@ float ds18b20_read_temp_timer2() {
         int16_t temp = (temp_h << 8) | temp_l;
         conversionStarted = false;
         tempConversionDone = false;
+        temp_obj.spindle_temp = temp * 0.0625;
+        // printFloat(temp * 0.0625, 3);
         return temp / 16.0;
     }
 

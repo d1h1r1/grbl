@@ -163,10 +163,11 @@ void protocol_main_loop()
     // uint8_t level = ReadFiltered();
     // print_uint8_base10(level);
     // printString("\n");
-    // float temp = ds18b20_read_temp_timer2();
-    // // float temp = ds18b20_read_temp();
+    float temp = ds18b20_read_temp_timer2();
+    // float temp = ds18b20_read_temp();
     // if (temp != 0) {
-    //   printFloat(temp, 3);
+      // printFloat_CoordValue(temp);
+      // printFloat(temp, 4);
     //   printString("\n");
     // }
     
