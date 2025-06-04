@@ -30,3 +30,5 @@ void limits_go_home(uint8_t cycle_mask);
 
 // 检查软限制违规
 void limits_soft_check(float *target);
+
+void a_go_home();

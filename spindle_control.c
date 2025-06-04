@@ -93,7 +93,7 @@ uint8_t spindle_get_state()
 void spindle_stop()
 {
   // 发送485停机指令
-  uint8_t sendData[] = {0x01, 0x06, 0x20, 0x00, 0x00, 0x05};
+  uint8_t sendData[] = {0x01, 0x06, 0x20, 0x00, 0x00, 0x06};
   control485(sendData);
   SPINDLE_TCCRA_REGISTER &= ~(1<<SPINDLE_COMB_BIT); // 禁用PWM。输出电压为零。
   #ifdef INVERT_SPINDLE_ENABLE_PIN

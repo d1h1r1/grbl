@@ -278,7 +278,8 @@ uint8_t system_execute_line(char *line)
           mc_homing_cycle(HOMING_CYCLE_Z);
           break;
         case 'A':
-          mc_homing_cycle(HOMING_CYCLE_A);
+          a_go_home();
+          // mc_homing_cycle(HOMING_CYCLE_A);
           break;
         default:
           return (STATUS_INVALID_STATEMENT);

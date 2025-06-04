@@ -88,6 +88,7 @@ int main(void)
     sleep_init();
     plan_reset(); // 清除块缓冲区和规划器变量
     st_reset();   // 清除步进电机子系统变量。
+    
     DDRE |= (1 << 4); // 将其配置为输出引脚。
     PORTE |= (1<<4);  // 设置引脚为高，继电器默认闭合
 
