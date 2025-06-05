@@ -1,5 +1,6 @@
 {
-    "files.associations": {
-        "grbl.h": "c"
-    }
+  "files.associations": {
+    "grbl.h": "c",
+    "spindle_control.h": "c"
+  }
 }

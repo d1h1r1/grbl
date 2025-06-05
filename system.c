@@ -158,7 +158,18 @@ uint8_t system_execute_line(char *line)
     tool_length_zero();
     break;
   case 'F':
-    getToolStatus();
+    if (line[4] == 0)
+    {
+      switch (line[2])
+      {
+      case 'A':
+        air_fan_control(line[3]);
+        break;
+      default:
+        return (STATUS_INVALID_STATEMENT);
+      }
+    }
+    // getToolStatus();
     break;
   case 'T':
     report_tool();

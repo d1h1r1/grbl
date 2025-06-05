@@ -1,14 +1,15 @@
 #include "grbl.h"
 
 // DS18B20连接在 PE0（数字0）
-#define DS18B20_DDR  DDRE
-#define DS18B20_PORT PORTE
-#define DS18B20_PIN  PINE
-#define DS18B20_BIT  3
+#define DS18B20_DDR  DDRF
+#define DS18B20_PORT PORTF
+#define DS18B20_PIN  PINF
+#define DS18B20_BIT  0
 
 volatile bool tempConversionDone = false;
 volatile uint16_t tempConversionCounter = 0;
 static bool conversionStarted = false;
+volatile uint16_t readSpindleTempNum = 0;
 
 all_temp temp_obj;
 
@@ -119,11 +120,18 @@ void time2_init() {
 
 
 ISR(TIMER2_COMPA_vect) {
+    // 500ms延时等待
     if (tempConversionCounter < 5000) {  // 500ms = 500 * 1ms
         tempConversionCounter++;
+        if(tempConversionCounter % 500 == 0){
+            ds18b20_read_temp_timer2();
+        }
+        if (tempConversionCounter % 1000 == 0)
+        {
+            tempConversionDone = true;
+            conversionStarted = false;
+        }
     } else {
-        tempConversionDone = true;
-        conversionStarted = false;
         tempConversionCounter = 0;
     }
 }
@@ -150,6 +158,5 @@ float ds18b20_read_temp_timer2() {
         // printFloat(temp * 0.0625, 3);
         return temp / 16.0;
     }
-
     return 0;  // 等待中
 }

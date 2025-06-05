@@ -228,7 +228,7 @@
 // 注意：以下选项仅在特殊情况下提供禁用某些数据字段的方法，但请注意GUI可能依赖于这些数据。
 // 如果禁用，可能会导致不兼容。
 #define REPORT_FIELD_BUFFER_STATE       // 默认启用。注释以禁用。
-#define REPORT_FIELD_PIN_STATE          // 默认启用。注释以禁用。
+// #define REPORT_FIELD_PIN_STATE          // 默认启用。注释以禁用。
 #define REPORT_FIELD_CURRENT_FEED_SPEED // 默认启用。注释以禁用。
 #define REPORT_FIELD_WORK_COORD_OFFSET  // 默认启用。注释以禁用。
 #define REPORT_FIELD_OVERRIDES          // 默认启用。注释以禁用。
