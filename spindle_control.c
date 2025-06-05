@@ -108,19 +108,19 @@ void spindle_stop()
 // 保持例程简短和高效。
 void spindle_set_speed(uint16_t pwm_value)
 {
-  print_uint32_base10(pwm_value);
-  SPINDLE_OCR_REGISTER = pwm_value; // 设置PWM输出水平。
-  if (pwm_value == SPINDLE_PWM_OFF_VALUE) {
-    SPINDLE_TCCRA_REGISTER &= ~(1<<SPINDLE_COMB_BIT); // 禁用PWM。输出电压为零。
-  } else {
-    SPINDLE_TCCRA_REGISTER |= (1<<SPINDLE_COMB_BIT); // 确保启用PWM输出。
+  if ((settings.flags & BITFLAG_LASER_MODE)) { 
+    SPINDLE_OCR_REGISTER = pwm_value; // 设置PWM输出水平。
+    if (pwm_value == SPINDLE_PWM_OFF_VALUE) {
+      SPINDLE_TCCRA_REGISTER &= ~(1<<SPINDLE_COMB_BIT); // 禁用PWM。输出电压为零。
+    } else {
+      SPINDLE_TCCRA_REGISTER |= (1<<SPINDLE_COMB_BIT); // 确保启用PWM输出。
+    }
   }
 }
 
 // 由 spindle_set_state() 和步进段生成器调用。保持例程简短和高效。
 uint16_t spindle_compute_pwm_value(float rpm) // Mega2560 PWM寄存器为16位。
 {
-  printFloat(rpm, 3);
   uint16_t pwm_value;
   rpm *= (0.010*sys.spindle_speed_ovr); // 按主轴速度覆盖值缩放。
   // 根据转速最大/最小设置和编程转速计算PWM寄存器值。
@@ -150,7 +150,6 @@ uint16_t spindle_compute_pwm_value(float rpm) // Mega2560 PWM寄存器为16位�
 // 睡眠和主轴停止覆盖调用。
 void spindle_set_state(uint8_t state, float rpm)
 {
-  printFloat(rpm,3);
   if (sys.abort) { return; } // 在中止期间阻塞。
   if (state == SPINDLE_DISABLE) { // 停止或设置主轴方向和转速。
     sys.spindle_speed = 0.0;
