@@ -204,17 +204,7 @@ static st_prep_t prep;
 // 启动初始化和限制调用此函数，但不应启动周期。
 void st_wake_up()
 {
-  // 启用步进驱动器。
-  if (bit_istrue(settings.flags, BITFLAG_INVERT_ST_ENABLE))
-  {
-    STEPPERS_DISABLE_PORT |= (1 << STEPPERS_DISABLE_BIT);
-  }
-  else
-  {
-    STEPPERS_DISABLE_PORT &= ~(1 << STEPPERS_DISABLE_BIT);
-  }
-
-  // 初始化步进输出位，以确保第一次 ISR 调用不会步进。
+ // 初始化步进输出位，以确保第一次 ISR 调用不会步进。
   st.step_outbits = step_port_invert_mask;
 
 // 根据设置初始化步进脉冲定时。确保在重写后更新。
@@ -253,14 +243,6 @@ void st_go_idle()
   {
     pin_state = !pin_state;
   } // 应用引脚反转。
-  if (pin_state)
-  {
-    STEPPERS_DISABLE_PORT |= (1 << STEPPERS_DISABLE_BIT);
-  }
-  else
-  {
-    STEPPERS_DISABLE_PORT &= ~(1 << STEPPERS_DISABLE_BIT);
-  }
 }
 
 /* “步进驱动器中断” - 该定时器中断是 Grbl 的核心。Grbl 使用
@@ -640,7 +622,6 @@ void stepper_init()
 {
   // 配置步进和方向接口引脚
   STEP_DDR |= STEP_MASK;
-  STEPPERS_DISABLE_DDR |= 1 << STEPPERS_DISABLE_BIT;
   DIRECTION_DDR |= DIRECTION_MASK;
 
   // 配置 Timer 1：步进驱动中断

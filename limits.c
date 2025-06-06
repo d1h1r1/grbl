@@ -30,6 +30,8 @@
 void limits_init()
 {
   LIMIT_DDR &= ~(LIMIT_MASK); // 设置为输入引脚
+  A_LIMIT_DDR &= ~(1 << A_LIMIT_BIT);
+  A_LIMIT_PORT |= (1 << A_LIMIT_BIT);  // 启用内部上拉电阻。正常高操作。
 
   #ifdef DISABLE_LIMIT_PIN_PULL_UP
     LIMIT_PORT &= ~(LIMIT_MASK); // 正常低操作。需要外部下拉。
@@ -389,8 +391,11 @@ void a_go_home()
     st_wake_up(); // 启动运动
     do {
       if (approach) {
+          // printString("111\n");
           // 检查限位状态。当它们发生变化时锁定循环轴。
-          limit_state = ~PINL & (1 << 5);
+          limit_state = A_LIMIT_PIN & (1 << A_LIMIT_BIT);
+          print_uint8_base10(limit_state);
+          printString("\n");
           if (axislock & step_pin[idx])
           {
               if (limit_state)

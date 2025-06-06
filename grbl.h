@@ -44,7 +44,6 @@
 #include "defaults.h"
 #include "cpu_map.h"
 #include "planner.h"
-#include "coolant_control.h"
 #include "eeprom.h"
 #include "gcode.h"
 #include "limits.h"
@@ -60,7 +59,7 @@
 #include "jog.h"
 #include "sleep.h"
 #include "getTemp.h"
-#include "fan.h"
+#include "switch.h"
 
 // ---------------------------------------------------------------------------------------
 // 编译时对定义值进行错误检查：

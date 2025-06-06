@@ -1293,22 +1293,6 @@ uint8_t gc_execute_line(char *line)
   }
   pl_data->condition |= gc_state.modal.spindle; // 设置供计划使用的条件标志。
 
-  // [8. 冷却液控制 ]:
-  if (gc_state.modal.coolant != gc_block.modal.coolant)
-  {
-    // 注意：冷却液 M 代码是模态的。每行仅允许一个命令。但是，可以同时存在多个状态，而冷却液禁用将清除所有状态。
-    coolant_sync(gc_block.modal.coolant);
-    if (gc_block.modal.coolant == COOLANT_DISABLE)
-    {
-      gc_state.modal.coolant = COOLANT_DISABLE;
-    }
-    else
-    {
-      gc_state.modal.coolant |= gc_block.modal.coolant;
-    }
-  }
-  pl_data->condition |= gc_state.modal.coolant; // 设置供计划使用的条件标志。
-
   // [9. 启用/禁用进给速率或主轴覆盖 ]: 不支持。始终启用。
 
   // [10. 停顿 ]:
@@ -1493,7 +1477,6 @@ uint8_t gc_execute_line(char *line)
         }
         system_flag_wco_change(); // 设置为立即刷新，以防有东西被更改。
         spindle_set_state(SPINDLE_DISABLE, 0.0);
-        coolant_set_state(COOLANT_DISABLE);
       }
       report_feedback_message(MESSAGE_PROGRAM_END);
     }

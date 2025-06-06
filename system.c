@@ -136,9 +136,9 @@ uint8_t system_execute_line(char *line)
   case 0:
     report_grbl_help();
     break; // 显示 Grbl 帮助
-  // case 'D':
-  //   tool_home(1);
-  //   break; // 松刀
+  case 'D':
+    getToolStatus();
+    break;
   // case 'U':
   //   tool_home(0);
   //   break; // 紧刀
@@ -148,12 +148,12 @@ uint8_t system_execute_line(char *line)
   case 'V':
     set_probe(0);
     break;
-  case 'A':
-    set_laser(0);
-    break;
-  case 'B':
-    set_laser(1);
-    break;
+  // case 'A':
+  //   set_laser(0);
+  //   break;
+  // case 'B':
+  //   set_laser(1);
+  //   break;
   case 'E':
     tool_length_zero();
     break;
@@ -165,11 +165,40 @@ uint8_t system_execute_line(char *line)
       case 'A':
         air_fan_control(line[3]);
         break;
+      case 'B':
+        spindle_l_fan_control(line[3]);
+        break;
+      case 'C':
+        spindle_r_fan_control(line[3]);
+        break;
+      case 'D':
+        blow_fan_control(line[3]);
+        break;
+      case 'E':
+        suction_cup_control(line[3]);
+        break;
+      case 'F':
+        light_control(line[3]);
+        break;
+      case 'G':
+        spray_control(line[3]);
+        break;
+      case 'H':
+        l_water_control(line[3]);
+        break;
+      case 'I':
+        r_water_control(line[3]);
+        break;
+      case 'J':
+        outline_control(line[3]);
+        break;
+      case 'K':
+        camera_control(line[3]);
+        break;
       default:
         return (STATUS_INVALID_STATEMENT);
       }
     }
-    // getToolStatus();
     break;
   case 'T':
     report_tool();

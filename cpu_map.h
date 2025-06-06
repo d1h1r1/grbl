@@ -53,11 +53,6 @@
 #define D_DIRECTION_BIT 1                                                                                                                                                                             // MEGA2560 Digital Pin 36
 #define DIRECTION_MASK ((1 << X_DIRECTION_BIT) | (1 << Y_DIRECTION_BIT) | (1 << Z_DIRECTION_BIT) | (1 << A_DIRECTION_BIT) | (1 << B_DIRECTION_BIT) | (1 << C_DIRECTION_BIT) | (1 << D_DIRECTION_BIT)) // All direction bits
 
-// 定义步进驱动器启用/禁用输出引脚。
-#define STEPPERS_DISABLE_DDR DDRB
-#define STEPPERS_DISABLE_PORT PORTB
-#define STEPPERS_DISABLE_BIT 7 // MEGA2560 Digital Pin 13
-#define STEPPERS_DISABLE_MASK (1 << STEPPERS_DISABLE_BIT)
 
 // 定义归位/硬限位开关输入引脚和限位中断向量。
 // 注意：所有限位位引脚必须在同一端口上。
@@ -67,30 +62,18 @@
 #define X_LIMIT_BIT 4   // MEGA2560 Digital Pin 10
 #define Y_LIMIT_BIT 5   // MEGA2560 Digital Pin 11
 #define Z_LIMIT_BIT 6   // MEGA2560 Digital Pin 12
-#define A_LIMIT_BIT 0   // MEGA2560 Digital Pin 53
 #define B_LIMIT_BIT 1   // MEGA2560 Digital Pin 52
 #define C_LIMIT_BIT 2   // MEGA2560 Digital Pin 51
 #define D_LIMIT_BIT 3   // MEGA2560 Digital Pin 50
 #define LIMIT_INT PCIE0 // 引脚更改中断使能引脚
 #define LIMIT_INT_vect PCINT0_vect
 #define LIMIT_PCMSK PCMSK0                                                                                                                                            // 引脚更改中断寄存器
-#define LIMIT_MASK ((1 << X_LIMIT_BIT) | (1 << Y_LIMIT_BIT) | (1 << Z_LIMIT_BIT) | (1 << A_LIMIT_BIT) | (1 << B_LIMIT_BIT) | (1 << C_LIMIT_BIT) | (1 << D_LIMIT_BIT)) // All limit bits
+#define LIMIT_MASK ((1 << X_LIMIT_BIT) | (1 << Y_LIMIT_BIT) | (1 << Z_LIMIT_BIT) | (1 << B_LIMIT_BIT) | (1 << C_LIMIT_BIT) | (1 << D_LIMIT_BIT)) // All limit bits
 
-// 定义主轴启用和主轴方向输出引脚。
-#define SPINDLE_ENABLE_DDR DDRH
-#define SPINDLE_ENABLE_PORT PORTH
-#define SPINDLE_ENABLE_BIT 3 // MEGA2560 Digital Pin 6
-#define SPINDLE_DIRECTION_DDR DDRE
-#define SPINDLE_DIRECTION_PORT PORTE
-#define SPINDLE_DIRECTION_BIT 3 // ME9GA2560 Digital Pin 5
-
-// 定义冷却液（flood）和雾状冷却（mist）启用输出引脚。
-#define COOLANT_FLOOD_DDR DDRH
-#define COOLANT_FLOOD_PORT PORTH
-#define COOLANT_FLOOD_BIT 5 // MEGA2560 Digital Pin 8
-#define COOLANT_MIST_DDR DDRH
-#define COOLANT_MIST_PORT PORTH
-#define COOLANT_MIST_BIT 6 // MEGA2560 Digital Pin 9
+#define A_LIMIT_DDR DDRD
+#define A_LIMIT_PORT PORTD
+#define A_LIMIT_PIN PIND
+#define A_LIMIT_BIT 7
 
 // 定义用户控制（CONTROL）输入引脚（循环开始、重置、进给暂停）。
 // 注意：所有CONTROL引脚必须在同一端口上，并且不能与其他输入引脚（限位）在同一端口上。

@@ -24,7 +24,7 @@ system_t sys;
 int main(void)
 {
   // 在上电时初始化系统。
-  fan_init();
+  switch_init();
   time2_init();
   // getDepth_init();
   serial_init();   // 设置串行波特率和中断
@@ -80,7 +80,6 @@ int main(void)
     serial_reset_read_buffer(); // 清除串行读取缓冲区
     gc_init();                  // 将 G-code 解析器设置为默认状态
     spindle_init();
-    coolant_init();
     limits_init();
     probe_control_init();
     // laser_control_init();

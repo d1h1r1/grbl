@@ -8,8 +8,9 @@ void tool_length_zero();
 void tool_control_init()
 {
   // 换刀检测
-  DDRD &= ~(1 << 7); // 设置为输入引脚
-  PORTD |= (1 << 7); // 启用内部上拉电阻。正常高操作。
+  DDRF &= ~(1 << 6); // 设置为输入引脚
+  PORTF |= (1 << 6); // 启用内部上拉电阻。正常高操作。
+  // PORTF &= ~(1 << 6); // 正常低操作。需要外部下拉。
 }
 
 void return_tool()
@@ -42,9 +43,9 @@ void return_tool()
 
 void getToolStatus(){
   printPgmString(PSTR("[换刀状态: "));
-  uint8_t status = PIND & (1 << 7);
-  print_uint8_base10((PIND & (1 << 7)) ? 1 : 0);
-  printPgmString(PSTR("]"));
+  // uint8_t status = PINF & (1 << 6);
+  print_uint8_base10((PINF & (1 << 6)) ? 1 : 0);
+  printPgmString(PSTR("]//"));
   printPgmString(PSTR("\r\n"));
   return 0;
 }

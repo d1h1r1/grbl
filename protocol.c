@@ -466,7 +466,6 @@ void protocol_exec_rt_system()
           if (coolant_state & COOLANT_FLOOD_ENABLE) { bit_false(coolant_state,COOLANT_FLOOD_ENABLE); }
           else { coolant_state |= COOLANT_FLOOD_ENABLE; }
         }
-        coolant_set_state(coolant_state); // 报告计数器在 coolant_set_state() 中设置。
         gc_state.modal.coolant = coolant_state;
       }
     }
@@ -540,7 +539,6 @@ static void protocol_exec_rt_suspend()
           #ifndef PARKING_ENABLE
 
             spindle_set_state(SPINDLE_DISABLE,0.0); // 去电
-            coolant_set_state(COOLANT_DISABLE);     // 去电
 
           #else
 					
@@ -571,7 +569,6 @@ static void protocol_exec_rt_suspend()
               pl_data->condition = (PL_COND_FLAG_SYSTEM_MOTION|PL_COND_FLAG_NO_FEED_OVERRIDE);
               pl_data->spindle_speed = 0.0;
               spindle_set_state(SPINDLE_DISABLE,0.0); // 去电
-              coolant_set_state(COOLANT_DISABLE); // 去电
 
               // 执行快速停车缩回运动到停车目标位置。
               if (parking_target[PARKING_AXIS] < PARKING_TARGET) {
@@ -585,7 +582,6 @@ static void protocol_exec_rt_suspend()
               // 无法进行停车运动。只需禁用主轴和冷却液。
               // 注意：激光模式不会启动停车运动，以确保激光立即停止。
               spindle_set_state(SPINDLE_DISABLE,0.0); // 去电
-              coolant_set_state(COOLANT_DISABLE);     // 去电
 
             }
 
@@ -601,7 +597,6 @@ static void protocol_exec_rt_suspend()
             report_feedback_message(MESSAGE_SLEEP_MODE);
             // 主轴和冷却液应已停止，但再次执行以确保。
             spindle_set_state(SPINDLE_DISABLE,0.0); // 去电
-            coolant_set_state(COOLANT_DISABLE); // 去电
             st_go_idle(); // 禁用步进器
             while (!(sys.abort)) { protocol_exec_rt_system(); } // 在重置前不做任何操作。
             return; // 收到中止信号。返回以重新初始化。
@@ -641,14 +636,6 @@ static void protocol_exec_rt_suspend()
                   spindle_set_state((restore_condition & (PL_COND_FLAG_SPINDLE_CW | PL_COND_FLAG_SPINDLE_CCW)), restore_spindle_speed);
                   delay_sec(SAFETY_DOOR_SPINDLE_DELAY, DELAY_MODE_SYS_SUSPEND);
                 }
-              }
-            }
-            if (gc_state.modal.coolant != COOLANT_DISABLE) {
-              // 如果安全门在先前的恢复操作期间重新打开，则阻塞。
-              if (bit_isfalse(sys.suspend, SUSPEND_RESTART_RETRACT)) {
-                // 注意：激光模式将遵循此延迟。排气系统通常由此引脚控制。
-                coolant_set_state((restore_condition & (PL_COND_FLAG_COOLANT_FLOOD | PL_COND_FLAG_COOLANT_FLOOD)));
-                delay_sec(SAFETY_DOOR_COOLANT_DELAY, DELAY_MODE_SYS_SUSPEND);
               }
             }
 

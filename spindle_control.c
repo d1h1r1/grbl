@@ -70,20 +70,6 @@ void spindle_init()
   spindle_stop();
 }
 
-uint8_t spindle_get_state()
-{
-  #ifdef INVERT_SPINDLE_ENABLE_PIN
-    if (bit_isfalse(SPINDLE_ENABLE_PORT,(1<<SPINDLE_ENABLE_BIT)) && (SPINDLE_TCCRA_REGISTER & (1<<SPINDLE_COMB_BIT))) {
-  #else
-    if (bit_istrue(SPINDLE_ENABLE_PORT,(1<<SPINDLE_ENABLE_BIT)) && (SPINDLE_TCCRA_REGISTER & (1<<SPINDLE_COMB_BIT))) {
-  #endif
-    if (SPINDLE_DIRECTION_PORT & (1<<SPINDLE_DIRECTION_BIT)) { return(SPINDLE_STATE_CCW); }
-    else { return(SPINDLE_STATE_CW); }
-  }
-	return(SPINDLE_STATE_DISABLE);
-}
-
-
 // 禁用主轴，并在启用PWM可变主轴速度时将PWM输出设置为零。
 // 由各种主程序和ISR例程调用。保持例程简短、快速和高效。
 // 由 spindle_init()、spindle_set_speed()、spindle_set_state() 和 mc_reset() 调用。
@@ -92,11 +78,6 @@ void spindle_stop()
   // 激光模式
   if (settings.flags & BITFLAG_LASER_MODE) { 
     SPINDLE_TCCRA_REGISTER &= ~(1<<SPINDLE_COMB_BIT); // 禁用PWM。输出电压为零。
-    #ifdef INVERT_SPINDLE_ENABLE_PIN
-      SPINDLE_ENABLE_PORT |= (1<<SPINDLE_ENABLE_BIT);  // 设置引脚为高
-    #else
-      SPINDLE_ENABLE_PORT &= ~(1<<SPINDLE_ENABLE_BIT); // 设置引脚为低
-    #endif
   }else{
     // 发送485停机指令
     uint8_t sendData[] = {0x01, 0x06, 0x20, 0x00, 0x00, 0x06};
