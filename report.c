@@ -539,15 +539,7 @@ void report_realtime_status()
   case STATE_HOLD:
     if (!(sys.suspend & SUSPEND_JOG_CANCEL))
     {
-      printPgmString(PSTR("Hold:"));
-      if (sys.suspend & SUSPEND_HOLD_COMPLETE)
-      {
-        serial_write('0');
-      } // 准备恢复
-      else
-      {
-        serial_write('1');
-      } // 正在保持
+      printPgmString(PSTR("Hold"));
       break;
     } // 在取消 jog 时继续打印 jog 状态。
   case STATE_JOG:

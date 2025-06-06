@@ -68,7 +68,7 @@
 #define LIMIT_INT PCIE0 // 引脚更改中断使能引脚
 #define LIMIT_INT_vect PCINT0_vect
 #define LIMIT_PCMSK PCMSK0                                                                                                                                            // 引脚更改中断寄存器
-#define LIMIT_MASK ((1 << X_LIMIT_BIT) | (1 << Y_LIMIT_BIT) | (1 << Z_LIMIT_BIT) | (1 << B_LIMIT_BIT) | (1 << C_LIMIT_BIT) | (1 << D_LIMIT_BIT)) // All limit bits
+#define LIMIT_MASK ((1 << X_LIMIT_BIT) | (1 << Y_LIMIT_BIT) | (1 << Z_LIMIT_BIT) | (1 << B_LIMIT_BIT) | (1 << C_LIMIT_BIT) | (1 << D_LIMIT_BIT) | (1) | (1 << 7)) // All limit bits
 
 #define A_LIMIT_DDR DDRD
 #define A_LIMIT_PORT PORTD
@@ -90,11 +90,11 @@
 #define CONTROL_MASK ((1 << CONTROL_RESET_BIT) | (1 << CONTROL_FEED_HOLD_BIT) | (1 << CONTROL_CYCLE_START_BIT) | (1 << CONTROL_SAFETY_DOOR_BIT))
 
 // 定义探针开关输入引脚。
-#define PROBE_DDR DDRJ
-#define PROBE_PIN PINJ
-#define PROBE_PORT PORTJ
-#define PROBE_BIT1 1 // MEGA2560 Digital Pin 14
-#define PROBE_BIT0 0 // MEGA2560 Digital Pin 15
+#define PROBE_DDR DDRL
+#define PROBE_PIN PINL
+#define PROBE_PORT PORTL
+#define PROBE_BIT1 2 // MEGA2560 Digital Pin 14
+#define PROBE_BIT0 3 // MEGA2560 Digital Pin 15
 #define PROBE_MASK ((1 << PROBE_BIT0) | (1 << PROBE_BIT1))
 
 // 高级配置（下面的变量一般不需要修改）

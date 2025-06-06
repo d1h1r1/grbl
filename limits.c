@@ -117,11 +117,20 @@ uint8_t limits_get_state()
     if (sys.state != STATE_ALARM) {  // 如果已经处于报警状态则忽略。 
       if (!(sys_rt_exec_alarm)) {
         // 检查限位引脚状态。 
-        uint8_t limit_state = limits_get_state();
-        // limit_state = limit_state & 0xF7;
+        if(LIMIT_PIN & (1)){
+          //虎钳松
+          // printString("松\n");
+          gc_execute_line("G91G0A-5");
+        }else if (LIMIT_PIN & (1 << 7))
+        {
+          //虎钳紧
+          // printString("紧\n");
+          gc_execute_line("G91G0A5");
+        }
+        uint8_t limit_state = LIMIT_PIN & 0x7E;  //第一位和第八位是电动虎钳的中断、不进入急停
         if (limit_state) {
             mc_reset(); // 发起系统终止。
-            print_uint8_base2_ndigit(limit_state, 8);
+            // print_uint8_base2_ndigit(limit_state, 8);
             system_set_exec_alarm(EXEC_ALARM_HARD_LIMIT); // 指示硬限位关键事件
         }
       }  

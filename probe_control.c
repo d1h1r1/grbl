@@ -1,49 +1,10 @@
 #include "grbl.h"
 
-void close_all_relay()
-{
-    PORTL &= ~((1 << 4) | (1 << 3)); // 低电平
-}
-
-void open_all_relay()
-{
-    PORTL |= ((1 << 4) | (1 << 3)); // 高电平
-}
-
 void probe_control_init()
 {
     // 限位
     DDRL &= ~((1 << 1) | 1); // 设置为输入引脚
     PORTL |= ((1 << 1) | 1); // 启用内部上拉电阻。正常高操作。
-    // 输出控制
-    DDRL |= ((1 << 4) | (1 << 3)); // 将其配置为输出引脚。
-
-    close_all_relay();
-    // open_all_relay();
-}
-
-void up_relay(uint8_t flag)
-{
-    if (flag)
-    {
-        PORTL |= (1 << 4);
-    }
-    else
-    {
-        PORTL &= ~(1 << 4);
-    }
-}
-
-void down_relay(uint8_t flag)
-{
-    if (flag)
-    {
-        PORTL |= (1 << 3);
-    }
-    else
-    {
-        PORTL &= ~(1 << 3);
-    }
 }
 
 //  0上V 1下P
@@ -51,14 +12,6 @@ void set_probe(uint8_t flag)
 {
     protocol_buffer_synchronize();
     limits_disable();
-    if (flag)
-    {
-        up_relay(0);
-    }
-    else
-    {
-        down_relay(0);
-    }
     uint8_t cycle_mask = 1 << C_AXIS;
     uint8_t idx = 5;
     if (sys.abort)
@@ -139,46 +92,38 @@ void set_probe(uint8_t flag)
             if (limit_state)
             {
                 axislock &= ~(step_pin[idx]);
-                if (flag)
-                {
-                    down_relay(1);
-                }
-                else
-                {
-                    up_relay(1);
-                }
             }
         }
 
         sys.homing_axis_lock = axislock;
         st_prep_buffer(); // 检查并准备段缓冲区。注意：此操作应不超过 200 微秒。
         // 退出例程：在此循环中没有时间运行 protocol_execute_realtime()。
-        // if (sys_rt_exec_state & (EXEC_SAFETY_DOOR | EXEC_RESET | EXEC_CYCLE_STOP))
-        // {
-        //     uint8_t rt_exec = sys_rt_exec_state;
-        //     // 回原点失败条件：在循环中发出重置。
-        //     if (rt_exec & EXEC_RESET)
-        //     {
-        //         system_set_exec_alarm(EXEC_ALARM_HOMING_FAIL_RESET);
-        //     }
-        //     // 回原点失败条件：安全门已打开。
-        //     if (rt_exec & EXEC_SAFETY_DOOR)
-        //     {
-        //         system_set_exec_alarm(EXEC_ALARM_HOMING_FAIL_DOOR);
-        //     }
-        //     if (sys_rt_exec_alarm)
-        //     {
-        //         mc_reset(); // 停止电机（如果正在运行）。
-        //         protocol_execute_realtime();
-        //         return;
-        //     }
-        //     else
-        //     {
-        //         // 拉离运动完成。禁用执行的 CYCLE_STOP。
-        //         system_clear_exec_state_flag(EXEC_CYCLE_STOP);
-        //         break;
-        //     }
-        // }
+        if (sys_rt_exec_state & (EXEC_SAFETY_DOOR | EXEC_RESET | EXEC_CYCLE_STOP))
+        {
+            uint8_t rt_exec = sys_rt_exec_state;
+            // 回原点失败条件：在循环中发出重置。
+            if (rt_exec & EXEC_RESET)
+            {
+                system_set_exec_alarm(EXEC_ALARM_HOMING_FAIL_RESET);
+            }
+            // 回原点失败条件：安全门已打开。
+            if (rt_exec & EXEC_SAFETY_DOOR)
+            {
+                system_set_exec_alarm(EXEC_ALARM_HOMING_FAIL_DOOR);
+            }
+            if (sys_rt_exec_alarm)
+            {
+                mc_reset(); // 停止电机（如果正在运行）。
+                protocol_execute_realtime();
+                return;
+            }
+            else
+            {
+                // 拉离运动完成。禁用执行的 CYCLE_STOP。
+                system_clear_exec_state_flag(EXEC_CYCLE_STOP);
+                break;
+            }
+        }
 
     } while (STEP_MASK & axislock);
 

@@ -1,31 +1,27 @@
 #include "grbl.h"
 
-// DS18B20连接在 PE0（数字0）
-#define DS18B20_DDR  DDRF
-#define DS18B20_PORT PORTF
-#define DS18B20_PIN  PINF
-#define DS18B20_BIT  0
-
 volatile bool tempConversionDone = false;
 volatile uint16_t tempConversionCounter = 0;
 static bool conversionStarted = false;
 volatile uint16_t readSpindleTempNum = 0;
 
+// 0主轴，1左风扇，2右风扇
+
 all_temp temp_obj;
 
 // 设置为输出
-void onewire_output() {
+void onewire_output(uint8_t flag) {
     DS18B20_DDR |= (1 << DS18B20_BIT);
 }
 
 // 设置为输入（释放总线）
-void onewire_input() {
+void onewire_input(uint8_t flag) {
     DS18B20_DDR &= ~(1 << DS18B20_BIT);
     DS18B20_PORT |= (1 << DS18B20_BIT); // 启用内部上拉
 }
 
 // 写0或1
-void onewire_write_bit(uint8_t bit) {
+void onewire_write_bit(uint8_t flag, uint8_t bit) {
     onewire_output();
     if (bit) {
         DS18B20_PORT &= ~(1 << DS18B20_BIT);
@@ -41,7 +37,7 @@ void onewire_write_bit(uint8_t bit) {
 }
 
 // 读1位
-uint8_t onewire_read_bit() {
+uint8_t onewire_read_bit(uint8_t flag) {
     uint8_t bit = 0;
     onewire_output();
     DS18B20_PORT &= ~(1 << DS18B20_BIT);
@@ -54,19 +50,19 @@ uint8_t onewire_read_bit() {
 }
 
 // 写1字节
-void onewire_write_byte(uint8_t byte) {
+void onewire_write_byte(uint8_t flag, uint8_t byte) {
     for (int i = 0; i < 8; i++) {
-        onewire_write_bit(byte & 0x01);
+        onewire_write_bit(flag, byte & 0x01);
         byte >>= 1;
     }
 }
 
 // 读1字节
-uint8_t onewire_read_byte() {
+uint8_t onewire_read_byte(uint8_t flag) {
     uint8_t byte = 0;
     for (int i = 0; i < 8; i++) {
         byte >>= 1;
-        if (onewire_read_bit()) {
+        if (onewire_read_bit(flag)) {
             byte |= 0x80;
         }
     }
@@ -74,7 +70,7 @@ uint8_t onewire_read_byte() {
 }
 
 // 复位并检测设备存在
-uint8_t onewire_reset() {
+uint8_t onewire_reset(uint8_t flag) {
     uint8_t presence = 0;
     onewire_output();
     DS18B20_PORT &= ~(1 << DS18B20_BIT);
@@ -86,27 +82,27 @@ uint8_t onewire_reset() {
     return presence;
 }
 
-// 读取温度
-float ds18b20_read_temp() {
-    uint8_t temp_l, temp_h;
-    int16_t temp;
+// // 读取温度
+// float ds18b20_read_temp(uint8_t flag) {
+//     uint8_t temp_l, temp_h;
+//     int16_t temp;
     
-    if (!onewire_reset()) return -1;  // 无响应
+//     if (!onewire_reset(flag)) return -1;  // 无响应
 
-    onewire_write_byte(0xCC);  // Skip ROM
-    onewire_write_byte(0x44);  // Convert T
-    _delay_ms(750);            // 等待转换
+//     onewire_write_byte(flag, 0xCC);  // Skip ROM
+//     onewire_write_byte(flag, 0x44);  // Convert T
+//     _delay_ms(750);            // 等待转换
 
-    onewire_reset();
-    onewire_write_byte(0xCC);  // Skip ROM
-    onewire_write_byte(0xBE);  // Read Scratchpad
+//     onewire_reset();
+//     onewire_write_byte(flag, 0xCC);  // Skip ROM
+//     onewire_write_byte(flag, 0xBE);  // Read Scratchpad
 
-    temp_l = onewire_read_byte();
-    temp_h = onewire_read_byte();
-    temp = (temp_h << 8) | temp_l;
-    // printFloat(temp * 0.0625, 3);
-    return temp * 0.0625;  // 每位代表0.0625℃
-}
+//     temp_l = onewire_read_byte(flag);
+//     temp_h = onewire_read_byte(flag);
+//     temp = (temp_h << 8) | temp_l;
+//     // printFloat(temp * 0.0625, 3);
+//     return temp * 0.0625;  // 每位代表0.0625℃
+// }
 
 
 void time2_init() {
@@ -136,21 +132,21 @@ ISR(TIMER2_COMPA_vect) {
     }
 }
 
-float ds18b20_read_temp_timer2() {
+float ds18b20_read_temp_timer2(uint8_t flag) {
     if (!conversionStarted) {
-        if (!onewire_reset()) return 0;
-        onewire_write_byte(0xCC);  // Skip ROM
-        onewire_write_byte(0x44);  // Convert T
+        if (!onewire_reset(flag)) return 0;
+        onewire_write_byte(flag, 0xCC);  // Skip ROM
+        onewire_write_byte(flag, 0x44);  // Convert T
         conversionStarted = true;
         return 0;
     }
 
     if (tempConversionDone) {
-        onewire_reset();
-        onewire_write_byte(0xCC);  // Skip ROM
-        onewire_write_byte(0xBE);  // Read Scratchpad
-        uint8_t temp_l = onewire_read_byte();
-        uint8_t temp_h = onewire_read_byte();
+        onewire_reset(flag);
+        onewire_write_byte(flag, 0xCC);  // Skip ROM
+        onewire_write_byte(flag, 0xBE);  // Read Scratchpad
+        uint8_t temp_l = onewire_read_byte(flag);
+        uint8_t temp_h = onewire_read_byte(flag);
         int16_t temp = (temp_h << 8) | temp_l;
         conversionStarted = false;
         tempConversionDone = false;

@@ -60,6 +60,7 @@
 #include "sleep.h"
 #include "getTemp.h"
 #include "switch.h"
+#include "probe_control.h"
 
 // ---------------------------------------------------------------------------------------
 // 编译时对定义值进行错误检查：
