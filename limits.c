@@ -366,19 +366,18 @@ void a_go_home()
     // 初始化并声明回原点例程所需的变量。
     axislock = 0;
     n_active_axis = 0;
-    for (idx=0; idx<N_AXIS; idx++) {
-      // 为活动轴设置目标位置并设置回原点速率的计算。
-      if (bit_istrue(cycle_mask,bit(idx))) {
-        n_active_axis++;
-        sys_position[idx] = 0;
-        // 根据循环掩码和回原点循环接近状态设置目标方向。
-        // 注意：这样编译出来的代码比尝试过的任何其他实现都要小。
-        target[idx] = -max_travel;
-        // 将轴锁应用于本循环中活动的步进端口引脚。
-        axislock |= step_pin[idx];
-      }
-
+    // 为活动轴设置目标位置并设置回原点速率的计算。
+    if (bit_istrue(cycle_mask,bit(idx))) {
+      n_active_axis++;
+      sys_position[idx] = 0;
+      // 根据循环掩码和回原点循环接近状态设置目标方向。
+      // 注意：这样编译出来的代码比尝试过的任何其他实现都要小。
+      target[idx] = -max_travel;
+      // 将轴锁应用于本循环中活动的步进端口引脚。
+      axislock |= step_pin[idx];
     }
+
+    
     homing_rate *= sqrt(n_active_axis); // [sqrt(N_AXIS)] 调整以便每个轴都以回原点速率移动。
     sys.homing_axis_lock = axislock;
 
@@ -394,8 +393,6 @@ void a_go_home()
           // printString("111\n");
           // 检查限位状态。当它们发生变化时锁定循环轴。
           limit_state = A_LIMIT_PIN & (1 << A_LIMIT_BIT);
-          print_uint8_base10(limit_state);
-          printString("\n");
           if (axislock & step_pin[idx])
           {
               if (limit_state)
