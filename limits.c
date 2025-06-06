@@ -354,31 +354,25 @@ void a_go_home()
       max_travel = max(max_travel, (-3) * settings.max_travel[idx]);
   }
  
-  // 设置搜索模式，以接近速率快速激活指定的 cycle_mask 限位开关。
-  bool approach = true;
   float homing_rate = settings.homing_seek_rate;
 
   uint8_t limit_state, axislock, n_active_axis;
-  do {
+  system_convert_array_steps_to_mpos(target,sys_position);
 
-    system_convert_array_steps_to_mpos(target,sys_position);
+  // 初始化并声明回原点例程所需的变量。
+  axislock = 0;
+  n_active_axis = 0;
+  // 为活动轴设置目标位置并设置回原点速率的计算。
+  if (bit_istrue(cycle_mask,bit(idx))) {
+    n_active_axis++;
+    sys_position[idx] = 0;
+    // 根据循环掩码和回原点循环接近状态设置目标方向。
+    // 注意：这样编译出来的代码比尝试过的任何其他实现都要小。
+    target[idx] = -max_travel;
+    // 将轴锁应用于本循环中活动的步进端口引脚。
+    axislock |= step_pin[idx];
+  }
 
-    // 初始化并声明回原点例程所需的变量。
-    axislock = 0;
-    n_active_axis = 0;
-    for (idx=0; idx<N_AXIS; idx++) {
-      // 为活动轴设置目标位置并设置回原点速率的计算。
-      if (bit_istrue(cycle_mask,bit(idx))) {
-        n_active_axis++;
-        sys_position[idx] = 0;
-        // 根据循环掩码和回原点循环接近状态设置目标方向。
-        // 注意：这样编译出来的代码比尝试过的任何其他实现都要小。
-        target[idx] = -max_travel;
-        // 将轴锁应用于本循环中活动的步进端口引脚。
-        axislock |= step_pin[idx];
-      }
-
-    }
     homing_rate *= sqrt(n_active_axis); // [sqrt(N_AXIS)] 调整以便每个轴都以回原点速率移动。
     sys.homing_axis_lock = axislock;
 
@@ -390,7 +384,6 @@ void a_go_home()
     st_prep_buffer(); // 准备并填充段缓冲区，来源于新计划的块。
     st_wake_up(); // 启动运动
     do {
-      if (approach) {
           // printString("111\n");
           // 检查限位状态。当它们发生变化时锁定循环轴。
           limit_state = A_LIMIT_PIN & (1 << A_LIMIT_BIT);
@@ -398,63 +391,45 @@ void a_go_home()
           printString("\n");
           if (axislock & step_pin[idx])
           {
-              if (limit_state)
-              {
-                  axislock &= ~(step_pin[idx]);
-              }
+            if (limit_state)
+            {
+                axislock &= ~(step_pin[idx]);
+            }
           }
           sys.homing_axis_lock = axislock;
-      }
+      
 
-      st_prep_buffer(); // 检查并准备段缓冲区。注意：此操作应不超过 200 微秒。
+          st_prep_buffer(); // 检查并准备段缓冲区。注意：此操作应不超过 200 微秒。
 
-      // 退出例程：在此循环中没有时间运行 protocol_execute_realtime()。
-      if (sys_rt_exec_state & (EXEC_SAFETY_DOOR | EXEC_RESET | EXEC_CYCLE_STOP)) {
-        uint8_t rt_exec = sys_rt_exec_state;
-        // 回原点失败条件：在循环中发出重置。
-        if (rt_exec & EXEC_RESET) { system_set_exec_alarm(EXEC_ALARM_HOMING_FAIL_RESET); }
-        // 回原点失败条件：安全门已打开。
-        if (rt_exec & EXEC_SAFETY_DOOR) { system_set_exec_alarm(EXEC_ALARM_HOMING_FAIL_DOOR); }
-        // 回原点失败条件：拉离运动后限位开关仍被激活
-        if (!approach && (limits_get_state() & cycle_mask)) { system_set_exec_alarm(EXEC_ALARM_HOMING_FAIL_PULLOFF); }
-        // 回原点失败条件：接近期间未找到限位开关。
-        if (approach && (rt_exec & EXEC_CYCLE_STOP)) { system_set_exec_alarm(EXEC_ALARM_HOMING_FAIL_APPROACH); }
-        if (sys_rt_exec_alarm) {
-          mc_reset(); // 停止电机（如果正在运行）。
-          protocol_execute_realtime();
-          return;
-        } else {
-          // 拉离运动完成。禁用执行的 CYCLE_STOP。
-          system_clear_exec_state_flag(EXEC_CYCLE_STOP);
-          break;
-        }
-      }
+          // 退出例程：在此循环中没有时间运行 protocol_execute_realtime()。
+          if (sys_rt_exec_state & (EXEC_SAFETY_DOOR | EXEC_RESET | EXEC_CYCLE_STOP)) {
+            uint8_t rt_exec = sys_rt_exec_state;
+            // 回原点失败条件：在循环中发出重置。
+            if (rt_exec & EXEC_RESET) { system_set_exec_alarm(EXEC_ALARM_HOMING_FAIL_RESET); }
+            // 回原点失败条件：安全门已打开。
+            if (rt_exec & EXEC_SAFETY_DOOR) { system_set_exec_alarm(EXEC_ALARM_HOMING_FAIL_DOOR); }            
+            if (sys_rt_exec_alarm) {
+              mc_reset(); // 停止电机（如果正在运行）。
+              protocol_execute_realtime();
+              return;
+            } else {
+              // 拉离运动完成。禁用执行的 CYCLE_STOP。
+              system_clear_exec_state_flag(EXEC_CYCLE_STOP);
+              break;
+            }
+          }
 
     } while (STEP_MASK & axislock);
 
     st_reset(); // 立即强制停止步进电机并重置步进段缓冲区。
     delay_ms(settings.homing_debounce_delay); // 延迟以允许瞬态动态衰减。
 
-    // 反转方向并重置回原点速率以进行定位循环。
-    approach = !approach;
-
-    // 在第一次循环后，回原点进入定位阶段。将搜索缩短至拉离距离。
-    if (approach) {
-      max_travel = settings.homing_pulloff*HOMING_AXIS_LOCATE_SCALAR;
-      homing_rate = settings.homing_feed_rate;
-    } else {
-      max_travel = settings.homing_pulloff;
-      homing_rate = settings.homing_seek_rate;
-    }
-
-  } while (n_cycle-- > 0);
-
   // 活动循环轴现在应已回原点，并且机器限位已被定位。默认情况下，Grbl 将机器空间定义为全部负值，正如大多数 CNC 一样。
-// 由于限位开关可以位于轴的任一侧，因此检查并适当地设置轴的机器零点。同时，
-// 为已回原点的轴限位开关设置拉离操作。这提供了一些初始的清离开关，并且应该有助于防止它们在启用硬限位时产生错误触发，或者当多个轴共享一个限位引脚时。
-  sys_position[idx] = 0;
+  // 由于限位开关可以位于轴的任一侧，因此检查并适当地设置轴的机器零点。同时，
+  // 为已回原点的轴限位开关设置拉离操作。这提供了一些初始的清离开关，并且应该有助于防止它们在启用硬限位时产生错误触发，或者当多个轴共享一个限位引脚时。
+    sys_position[idx] = 0;
 
-  sys.step_control = STEP_CONTROL_NORMAL_OP; // 将步进控制返回到正常操作。
+    sys.step_control = STEP_CONTROL_NORMAL_OP; // 将步进控制返回到正常操作。
 }
 
 
