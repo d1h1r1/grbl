@@ -172,54 +172,64 @@ uint8_t onewire_reset(uint8_t flag) {
 // }
 
 
-void time2_init() {
-    // 配置 Timer2（8位定时器，CTC模式，64分频）
-    TCCR2A = (1 << WGM21);  // CTC模式
-    TCCR2B = (1 << CS22);   // 64分频（16MHz / 64 = 250kHz）
-    OCR2A = 249;            // 1ms = (250kHz / 250) - 1
-    TIMSK2 = (1 << OCIE2A); // 启用比较匹配中断
-    sei();                  // 启用全局中断
-}
+// void time2_init() {
+//     // 配置 Timer2（8位定时器，CTC模式，64分频）
+//     TCCR2A = (1 << WGM21);  // CTC模式
+//     TCCR2B = (1 << CS22);   // 64分频（16MHz / 64 = 250kHz）
+//     OCR2A = 249;            // 1ms = (250kHz / 250) - 1
+//     TIMSK2 = (1 << OCIE2A); // 启用比较匹配中断
+//     sei();                  // 启用全局中断
+// }
 
+void time2_init() {
+    // 配置 Timer2（8位定时器，CTC模式，1024分频）
+    TCCR2A = (1 << WGM21);   // CTC模式
+    TCCR2B = (1 << CS22) | (1 << CS21) | (1 << CS20);  // 1024分频（16MHz / 1024 = 15.625kHz）
+    OCR2A = 1561;            // 100ms = (15.625kHz / 1562) - 1
+    TIMSK2 = (1 << OCIE2A);  // 启用比较匹配中断
+    sei();                   // 启用全局中断
+}
 
 ISR(TIMER2_COMPA_vect) {
     // 500ms延时等待
-    if (tempConversionCounter < 5000) {  // 500ms = 500 * 1ms
+    if (tempConversionCounter < 50) {  // 5000ms = 50 * 100ms
         tempConversionCounter++;
-        switch (tempConversionCounter / 500)
-        {
-        case 1:
-            ds18b20_read_temp_timer2(0);
-            break;
-        case 2:
-            tempConversionDone = true;
-            conversionStarted = false;
-            break;
-        case 3:
-            ds18b20_read_temp_timer2(0);
-            break;
-        case 4:
-            ds18b20_read_temp_timer2(1);
-            break;
-        case 5:
-            tempConversionDone = true;
-            conversionStarted = false;
-            break;
-        case 6:
-            ds18b20_read_temp_timer2(1);
-            break;
-        case 7:
-            ds18b20_read_temp_timer2(2);
-            break;
-        case 8:
-            tempConversionDone = true;
-            conversionStarted = false;
-            break;
-        case 9:
-            ds18b20_read_temp_timer2(2);
-            break;
-        default:
-            break;
+        if (tempConversionCounter % 5 == 0) {  // 仅在 5, 10, 15... 时触发
+            switch (tempConversionCounter / 5)
+            {
+            case 1:
+                ds18b20_read_temp_timer2(0);
+                break;
+            case 2:
+                tempConversionDone = true;
+                conversionStarted = false;
+                break;
+            case 3:
+                ds18b20_read_temp_timer2(0);
+                break;
+            case 4:
+                ds18b20_read_temp_timer2(1);
+                break;
+            case 5:
+                tempConversionDone = true;
+                conversionStarted = false;
+                break;
+            case 6:
+                ds18b20_read_temp_timer2(1);
+                break;
+            case 7:
+                ds18b20_read_temp_timer2(2);
+                break;
+            case 8:
+                tempConversionDone = true;
+                conversionStarted = false;
+                break;
+            case 9:
+                ds18b20_read_temp_timer2(2);
+                break;
+            default:
+                break;
+            }
         }
         // if(tempConversionCounter == 500){
         //     ds18b20_read_temp_timer2(0);

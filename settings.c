@@ -133,7 +133,7 @@ void settings_restore(uint8_t restore_flag)
       settings.tool_y[i] = i * 10;
       settings.tool_z[i] = i * 10;
     }
-
+    memset(settings.tool_data, 0, sizeof(settings.tool_data));
 #ifdef A_AXIS
     settings.steps_per_mm[A_AXIS] = DEFAULT_A_STEPS_PER_MM;
     settings.max_rate[A_AXIS] = DEFAULT_A_MAX_RATE;

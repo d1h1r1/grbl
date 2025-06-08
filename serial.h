@@ -34,12 +34,14 @@ void serial2_init();
 
 // 将一个字节写入 TX 串口缓冲区。由主程序调用。
 void serial_write(uint8_t data);
+uint8_t serial_write_bytes(const uint8_t* data, uint8_t length);
 void serial2_write(uint8_t data);
 void serial1_write(uint8_t data);
 
 // 获取串口读取缓冲区中的第一个字节。由主程序调用。
 uint8_t serial_read();
 uint8_t serial1_read();
+uint8_t serial1_read_bytes(uint8_t* buffer, uint8_t length);
 uint8_t serial2_read();
 
 // 重置并清空读取缓冲区中的数据。由急停和重置使用。
@@ -51,9 +53,9 @@ uint8_t serial_get_rx_buffer_available();
 // 返回 RX 串口缓冲区中已用的字节数。
 // 注意：已弃用。除非在 config.h 中启用经典状态报告，否则不使用。
 uint8_t serial_get_rx_buffer_count();
-
+uint8_t serial1_get_rx_buffer_count();
 // 返回 TX 串口缓冲区中已用的字节数。
 // 注意：除调试和确保没有 TX 瓶颈外不使用。
 uint8_t serial_get_tx_buffer_count();
-
+void clearSerial1BufferHard();
 #endif

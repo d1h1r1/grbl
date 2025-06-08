@@ -8,5 +8,6 @@
 
 void rfid_control_init();
 void set_rfid(uint8_t flag);
+void rfid_read(uint8_t* return_data);
 
 #endif

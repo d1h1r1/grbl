@@ -73,7 +73,7 @@
 #define AXIS_SETTINGS_START_VAL 100 // 注意：保留设置值 >= 100 用于轴设置。最多到 255。
 #define AXIS_SETTINGS_INCREMENT 10  // 必须大于轴设置的数量
 
-#define TOOL_NUM 9                  // 刀具数量
+#define TOOL_NUM 6                  // 刀具数量
 #define TOOL_SETTINGS_START_VAL 210 // 注意：保留设置值 >= 100 用于轴设置。最多到 255。
 
 // 全局持久设置（从字节 EEPROM_ADDR_GLOBAL 开始存储）
@@ -110,6 +110,7 @@ typedef struct
   float tool_x[TOOL_NUM]; // 刀具x坐标
   float tool_y[TOOL_NUM]; // 刀具y坐标
   float tool_z[TOOL_NUM]; // 刀具z坐标
+  uint8_t tool_data[TOOL_NUM][8]; // 刀具z坐标
 } settings_t;
 extern settings_t settings; // 全局设置变量
 

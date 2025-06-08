@@ -117,6 +117,8 @@ void report_status_message(uint8_t status_code)
   case STATUS_OK: // STATUS_OK
     printPgmString(PSTR("ok\r\n"));
     break;
+  case 2:
+    break;
   default:
     printPgmString(PSTR("error:"));
     print_uint8_base10(status_code);

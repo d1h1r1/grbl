@@ -71,6 +71,15 @@ uint8_t serial_get_rx_buffer_count()
   return (RX_BUFFER_SIZE - (rtail-serial_rx_buffer_head));
 }
 
+// 返回 RX 串口缓冲区中已使用的字节数。
+// 注意：已废弃。除非在 config.h 中启用经典状态报告，否则不会使用。
+uint8_t serial1_get_rx_buffer_count()
+{
+  uint8_t rtail = serial1_rx_buffer_tail; // 复制以限制对 volatile 的多次调用
+  if (serial1_rx_buffer_head >= rtail) { return(serial1_rx_buffer_head-rtail); }
+  return (RX_BUFFER_SIZE - (rtail-serial1_rx_buffer_head));
+}
+
 
 // 返回 TX 串口缓冲区中已使用的字节数。
 // 注意：仅用于调试和确保没有 TX 瓶颈。
@@ -103,18 +112,11 @@ void serial_init()
 
 void serial1_init()
 {
-  // #if BAUD_RATE < 57600
-  //   uint16_t UBRR2_value = ((F_CPU / (8L * BAUD_RATE)) - 1)/2;
-  //   UCSR2A &= ~(1 << U2X2);
-  // #else
-  //   uint16_t UBRR2_value = ((F_CPU / (4L * BAUD_RATE)) - 1)/2;
-  //   UCSR2A |= (1 << U2X2);
-  // #endif
-  uint16_t UBRR1_value = ((F_CPU / (8L * 57600)) - 1)/2;
-  UCSR1A &= ~(1 << U2X2);
+  // uint16_t UBRR1_value = ((F_CPU / (8L * 57600)) - 1)/2;
+  // UCSR1A &= ~(1 << U2X1);
 
-  // uint16_t UBRR2_value = ((F_CPU / (4L * 115200)) - 1)/2;
-  // UCSR2A |= (1 << U2X2);
+  uint16_t UBRR1_value = ((F_CPU / (4L * 57600)) - 1)/2;
+  UCSR1A |= (1 << U2X1);
 
   UBRR1H = UBRR1_value >> 8;
   UBRR1L = UBRR1_value;
@@ -124,13 +126,6 @@ void serial1_init()
 
 void serial2_init()
 {
-  // #if BAUD_RATE < 57600
-  //   uint16_t UBRR2_value = ((F_CPU / (8L * BAUD_RATE)) - 1)/2;
-  //   UCSR2A &= ~(1 << U2X2);
-  // #else
-  //   uint16_t UBRR2_value = ((F_CPU / (4L * BAUD_RATE)) - 1)/2;
-  //   UCSR2A |= (1 << U2X2);
-  // #endif
   uint16_t UBRR2_value = ((F_CPU / (8L * 9600)) - 1)/2;
   UCSR2A &= ~(1 << U2X2);
 
@@ -163,6 +158,35 @@ void serial_write(uint8_t data) {
 
   // 启用数据寄存器空中断以确保 TX 流传输正在运行
   UCSR0B |=  (1 << UDRIE0);
+}
+
+// 新函数：向串口发送多个字节
+// 参数：data - 要发送的数据指针
+//       length - 要发送的数据长度
+// 返回值：实际发送的字节数（正常情况下应等于length）
+uint8_t serial_write_bytes(const uint8_t* data, uint8_t length) {
+  uint8_t bytes_sent = 0;
+  
+  while (bytes_sent < length) {
+    uint8_t next_head = serial_tx_buffer_head + 1;
+    if (next_head == TX_RING_BUFFER) { next_head = 0; }
+
+    // 检查缓冲区空间（非阻塞方式）
+    if (next_head == serial_tx_buffer_tail) {
+      // 缓冲区已满，启用中断并返回已发送字节数
+      UCSR0B |= (1 << UDRIE0);
+      return bytes_sent;
+    }
+
+    // 写入数据
+    serial_tx_buffer[serial_tx_buffer_head] = data[bytes_sent];
+    bytes_sent++;
+    serial_tx_buffer_head = next_head;
+  }
+
+  // 确保数据寄存器空中断已启用
+  UCSR0B |= (1 << UDRIE0);
+  return bytes_sent;
 }
 
 void serial1_write(uint8_t data) {
@@ -244,6 +268,36 @@ uint8_t serial1_read()
     return data;
   }
 }
+
+// 新函数：从串口1缓冲区读取指定长度的数据
+// 参数：buffer - 存储读取数据的缓冲区指针
+//       length - 要读取的数据长度
+// 返回值：实际读取的数据长度（可能小于请求长度）
+uint8_t serial1_read_bytes(uint8_t* buffer, uint8_t length)
+{
+  uint8_t bytes_read = 0;
+  
+  while (bytes_read < length) {
+    uint8_t tail = serial1_rx_buffer_tail;
+    
+    if (serial1_rx_buffer_head == tail) {
+      // 缓冲区为空，停止读取
+      break;
+    } else {
+      // 读取数据
+      buffer[bytes_read] = serial1_rx_buffer[tail];
+      bytes_read++;
+      
+      // 更新tail指针
+      tail++;
+      if (tail == RX1_RING_BUFFER) { tail = 0; }
+      serial1_rx_buffer_tail = tail;
+    }
+  }
+  
+  return bytes_read;
+}
+
 
 uint8_t serial2_read()
 {
@@ -366,4 +420,12 @@ ISR(USART2_UDRE_vect)
 void serial_reset_read_buffer()
 {
   serial_rx_buffer_tail = serial_rx_buffer_head; // 重置读取缓冲区
+}
+
+void clearSerial1BufferHard() {
+  // 清除接收缓冲区（AVR 专用方法）
+  UCSR1B &= ~(1 << RXEN1);  // 禁用接收
+  UCSR1B |= (1 << RXEN1);   // 重新启用接收
+  serial1_rx_buffer_tail = serial1_rx_buffer_head; // 重置读取缓冲区
+  memset(serial1_rx_buffer, 0, sizeof(serial1_rx_buffer));  // 全部置0
 }

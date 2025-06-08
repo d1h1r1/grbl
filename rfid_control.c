@@ -149,3 +149,27 @@ void set_rfid(uint8_t flag)
     plan_sync_position();
     limits_init();
 }
+
+
+void rfid_read(uint8_t* return_data)
+{
+    uint8_t first_data;
+    uint8_t read_command[11] = {0xAA, 0x09, 0x20, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x55};
+    clearSerial1BufferHard();
+    for(uint8_t j=0; j < 3; j++){
+        for(uint8_t i=0; i < sizeof(read_command); i++){
+            serial1_write(read_command[i]);
+            delay_ms(1);
+        }
+        delay_ms(100);
+        if(serial1_read() != 0xAA) continue;
+        uint8_t data_len = serial1_read();
+        uint8_t read_data[data_len];
+        serial1_read_bytes(read_data, data_len);
+        if(read_data[data_len-1] == 0x55){
+            // serial_write_bytes(&read_data[6], 8);
+            memcpy(return_data, &read_data[6], 8);
+            return;
+        }
+    }
+}

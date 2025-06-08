@@ -131,29 +131,57 @@ uint8_t system_execute_line(char *line)
   uint8_t char_counter = 1;
   uint8_t helper_var = 0; // 辅助变量
   float parameter, value;
+  uint8_t return_data[8];
+  memset(return_data, 0, 8);
   switch (line[char_counter])
   {
   case 0:
     report_grbl_help();
     break; // 显示 Grbl 帮助
-  case 'D':
-    set_rfid(1);
+  case 'S':
+    if (line[4] == 0)
+    {
+      switch (line[2])
+      {
+        uint8_t index = line[3] - '0';
+        case 'R':
+          set_rfid(index);  // $SR
+          break;
+        case 'P':
+          set_probe(index);  // $SP
+          break;
+      }
+    }
     break;
-  case 'U':
-    set_rfid(0);
-    break;
-  case 'P':
-    set_probe(1);
-    break;
-  case 'V':
-    set_probe(0);
-    break;
-  // case 'A':
-  //   set_laser(0);
-  //   break;
-  // case 'B':
-  //   set_laser(1);
-  //   break;
+  case 'A':
+    if (line[2] == 0)
+    {
+      for (size_t i = 0; i < 5; i++)
+      {
+        serial_write_bytes(settings.tool_data[i], 8);
+      }
+      return 2;
+    }
+    if (line[4] == 0)
+    {
+      uint8_t tool_index = line[3] - '0';
+      if (tool_index >= TOOL_NUM) return STATUS_INVALID_STATEMENT;
+      switch (line[2])
+      {
+        case 'R':
+          rfid_read(return_data);
+          memcpy(settings.tool_data[tool_index-1], return_data, 8);
+          write_global_settings();
+          break;
+        case 'G':
+          serial_write_bytes(settings.tool_data[tool_index-1], 8);
+          break;
+        default:
+          return (STATUS_INVALID_STATEMENT);
+      }
+      return 2;
+    }
+    
   case 'E':
     tool_length_zero();
     break;
@@ -162,41 +190,42 @@ uint8_t system_execute_line(char *line)
     {
       switch (line[2])
       {
+      uint8_t index = line[3] - '0';
       case 'A':
-        air_fan_control(line[3]);
+        air_fan_control(index);
         break;
       case 'B':
-        spindle_l_fan_control(line[3]);
+        spindle_l_fan_control(index);
         break;
       case 'C':
-        spindle_r_fan_control(line[3]);
+        spindle_r_fan_control(index);
         break;
       case 'D':
-        blow_fan_control(line[3]);
+        blow_fan_control(index);
         break;
       case 'E':
-        suction_cup_control(line[3]);
+        suction_cup_control(index);
         break;
       case 'F':
-        light_control(line[3]);
+        light_control(index);
         break;
       case 'G':
-        spray_control(line[3]);
+        spray_control(index);
         break;
       case 'H':
-        l_water_control(line[3]);
+        l_water_control(index);
         break;
       case 'I':
-        r_water_control(line[3]);
+        r_water_control(index);
         break;
       case 'J':
-        outline_control(line[3]);
+        outline_control(index);
         break;
       case 'K':
-        camera_control(line[3]);
+        camera_control(index);
         break;
       case 'L':
-        rfid_ele_control(line[3]);
+        rfid_ele_control(index);
         break;
       default:
         return (STATUS_INVALID_STATEMENT);

@@ -28,7 +28,7 @@ int main(void)
   time2_init();
   // getDepth_init();
   serial_init();   // 设置串行波特率和中断
-  // serial1_init();
+  serial1_init();
   serial2_init();
   settings_init(); // 从 EEPROM 加载 Grbl 设置
   stepper_init();  // 配置步进电机引脚和中断定时器
@@ -97,7 +97,8 @@ int main(void)
     plan_sync_position();
     gc_sync_position();
     // 打印欢迎消息。指示在上电或重置时发生了初始化。
-    report_init_message();
+    report_init_message();  
+   
     // 启动 Grbl 主循环。处理程序输入并执行它们。
     protocol_main_loop();
   }
