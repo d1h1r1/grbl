@@ -61,6 +61,7 @@
 #include "getTemp.h"
 #include "switch.h"
 #include "probe_control.h"
+#include "rfid_control.h"
 
 // ---------------------------------------------------------------------------------------
 // 编译时对定义值进行错误检查：

@@ -13,6 +13,7 @@ void switch_init()
     R_WATER_DDR |= (1 << R_WATER_BIT);
     OUTLINE_DDR |= (1 << OUTLINE_BIT);
     CAMERA_DDR |= (1 << CAMERA_BIT);
+    RFID_ELE_DDR |= (1 << RFID_ELE_BIT);
 }
 
 // 1开0关
@@ -114,6 +115,7 @@ void outline_control(uint8_t flag)
         OUTLINE_PORT &= ~(1 << OUTLINE_BIT);
     }
 }
+
 // 1开0关
 void camera_control(uint8_t flag)
 {
@@ -121,5 +123,15 @@ void camera_control(uint8_t flag)
         CAMERA_PORT |= (1 << CAMERA_BIT);
     }else{
         CAMERA_PORT &= ~(1 << CAMERA_BIT);
+    }
+}
+
+// 1开0关
+void rfid_ele_control(uint8_t flag)
+{
+    if(flag-48){
+        RFID_ELE_PORT |= (1 << RFID_ELE_BIT);
+    }else{
+        RFID_ELE_PORT &= ~(1 << RFID_ELE_BIT);
     }
 }

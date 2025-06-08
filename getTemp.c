@@ -11,27 +11,62 @@ all_temp temp_obj;
 
 // 设置为输出
 void onewire_output(uint8_t flag) {
-    DS18B20_DDR |= (1 << DS18B20_BIT);
+    if(flag==0){
+        SPINDLE_TEMP_DDR |= (1 << SPINDLE_TEMP_BIT);
+    }else if (flag==1)
+    {
+        L_FAN_TEMP_DDR |= (1 << L_FAN_TEMP_BIT);
+    }else if (flag==2)
+    {
+        R_FAN_TEMP_DDR |= (1 << R_FAN_TEMP_BIT);
+    }
 }
 
 // 设置为输入（释放总线）
 void onewire_input(uint8_t flag) {
-    DS18B20_DDR &= ~(1 << DS18B20_BIT);
-    DS18B20_PORT |= (1 << DS18B20_BIT); // 启用内部上拉
+    if(flag==0){
+        SPINDLE_TEMP_DDR &= ~(1 << SPINDLE_TEMP_BIT);
+        SPINDLE_TEMP_PORT |= (1 << SPINDLE_TEMP_BIT); // 启用内部上拉
+    }else if (flag==1)
+    {
+        L_FAN_TEMP_DDR &= ~(1 << L_FAN_TEMP_BIT);
+        L_FAN_TEMP_PORT |= (1 << L_FAN_TEMP_BIT); // 启用内部上拉
+    }else if (flag==2)
+    {
+        R_FAN_TEMP_DDR &= ~(1 << R_FAN_TEMP_BIT);
+        R_FAN_TEMP_PORT |= (1 << R_FAN_TEMP_BIT); // 启用内部上拉
+    }
+
 }
 
 // 写0或1
 void onewire_write_bit(uint8_t flag, uint8_t bit) {
-    onewire_output();
+    onewire_output(flag);
     if (bit) {
-        DS18B20_PORT &= ~(1 << DS18B20_BIT);
+        if(flag==0){
+            SPINDLE_TEMP_PORT &= ~(1 << SPINDLE_TEMP_BIT);
+        }else if (flag==1)
+        {
+            L_FAN_TEMP_PORT &= ~(1 << L_FAN_TEMP_BIT);
+        }else if (flag==2)
+        {
+            R_FAN_TEMP_PORT &= ~(1 << R_FAN_TEMP_BIT);
+        }
         _delay_us(5);
-        onewire_input();
+        onewire_input(flag);
         _delay_us(55);
     } else {
-        DS18B20_PORT &= ~(1 << DS18B20_BIT);
+        if(flag==0){
+            SPINDLE_TEMP_PORT &= ~(1 << SPINDLE_TEMP_BIT);
+        }else if (flag==1)
+        {
+            L_FAN_TEMP_PORT &= ~(1 << L_FAN_TEMP_BIT);
+        }else if (flag==2)
+        {
+            R_FAN_TEMP_PORT &= ~(1 << R_FAN_TEMP_BIT);
+        }
         _delay_us(65);
-        onewire_input();
+        onewire_input(flag);
         _delay_us(5);
     }
 }
@@ -39,12 +74,28 @@ void onewire_write_bit(uint8_t flag, uint8_t bit) {
 // 读1位
 uint8_t onewire_read_bit(uint8_t flag) {
     uint8_t bit = 0;
-    onewire_output();
-    DS18B20_PORT &= ~(1 << DS18B20_BIT);
+    onewire_output(flag);
+    if(flag==0){
+        SPINDLE_TEMP_PORT &= ~(1 << SPINDLE_TEMP_BIT);
+    }else if (flag==1)
+    {
+        L_FAN_TEMP_PORT &= ~(1 << L_FAN_TEMP_BIT);
+    }else if (flag==2)
+    {
+        R_FAN_TEMP_PORT &= ~(1 << R_FAN_TEMP_BIT);
+    }
     _delay_us(3);
-    onewire_input();
+    onewire_input(flag);
     _delay_us(10);
-    bit = (DS18B20_PIN & (1 << DS18B20_BIT)) ? 1 : 0;
+    if(flag==0){
+        bit = (SPINDLE_TEMP_PIN & (1 << SPINDLE_TEMP_BIT)) ? 1 : 0;
+    }else if (flag==1)
+    {
+        bit = (L_FAN_TEMP_PIN & (1 << L_FAN_TEMP_BIT)) ? 1 : 0;
+    }else if (flag==2)
+    {
+        bit = (R_FAN_TEMP_PIN & (1 << R_FAN_TEMP_BIT)) ? 1 : 0;
+    }
     _delay_us(50);
     return bit;
 }
@@ -72,12 +123,28 @@ uint8_t onewire_read_byte(uint8_t flag) {
 // 复位并检测设备存在
 uint8_t onewire_reset(uint8_t flag) {
     uint8_t presence = 0;
-    onewire_output();
-    DS18B20_PORT &= ~(1 << DS18B20_BIT);
+    onewire_output(flag);
+    if(flag==0){
+        SPINDLE_TEMP_PORT &= ~(1 << SPINDLE_TEMP_BIT);
+    }else if (flag==1)
+    {
+        L_FAN_TEMP_PORT &= ~(1 << L_FAN_TEMP_BIT);
+    }else if (flag==2)
+    {
+        R_FAN_TEMP_PORT &= ~(1 << R_FAN_TEMP_BIT);
+    }
     _delay_us(480);
-    onewire_input();
+    onewire_input(flag);
     _delay_us(70);
-    presence = (DS18B20_PIN & (1 << DS18B20_BIT)) ? 0 : 1;
+    if(flag==0){
+        presence = (SPINDLE_TEMP_PIN & (1 << SPINDLE_TEMP_BIT)) ? 0 : 1;
+    }else if (flag==1)
+    {
+        presence = (L_FAN_TEMP_PIN & (1 << L_FAN_TEMP_BIT)) ? 0 : 1;
+    }else if (flag==2)
+    {
+        presence = (R_FAN_TEMP_PIN & (1 << R_FAN_TEMP_BIT)) ? 0 : 1;
+    }
     _delay_us(410);
     return presence;
 }
@@ -119,14 +186,52 @@ ISR(TIMER2_COMPA_vect) {
     // 500ms延时等待
     if (tempConversionCounter < 5000) {  // 500ms = 500 * 1ms
         tempConversionCounter++;
-        if(tempConversionCounter % 500 == 0){
-            ds18b20_read_temp_timer2();
-        }
-        if (tempConversionCounter % 1000 == 0)
+        switch (tempConversionCounter / 500)
         {
+        case 1:
+            ds18b20_read_temp_timer2(0);
+            break;
+        case 2:
             tempConversionDone = true;
             conversionStarted = false;
+            break;
+        case 3:
+            ds18b20_read_temp_timer2(0);
+            break;
+        case 4:
+            ds18b20_read_temp_timer2(1);
+            break;
+        case 5:
+            tempConversionDone = true;
+            conversionStarted = false;
+            break;
+        case 6:
+            ds18b20_read_temp_timer2(1);
+            break;
+        case 7:
+            ds18b20_read_temp_timer2(2);
+            break;
+        case 8:
+            tempConversionDone = true;
+            conversionStarted = false;
+            break;
+        case 9:
+            ds18b20_read_temp_timer2(2);
+            break;
+        default:
+            break;
         }
+        // if(tempConversionCounter == 500){
+        //     ds18b20_read_temp_timer2(0);
+        // }
+        // if (tempConversionCounter == 1000)
+        // {
+        //     tempConversionDone = true;
+        //     conversionStarted = false;
+        // }
+        // if(tempConversionCounter == 1500){
+        //     ds18b20_read_temp_timer2(0);
+        // }
     } else {
         tempConversionCounter = 0;
     }
@@ -150,7 +255,16 @@ float ds18b20_read_temp_timer2(uint8_t flag) {
         int16_t temp = (temp_h << 8) | temp_l;
         conversionStarted = false;
         tempConversionDone = false;
-        temp_obj.spindle_temp = temp * 0.0625;
+        if(flag==0){
+            temp_obj.spindle_temp = temp * 0.0625;
+        }else if (flag==1)
+        {
+            temp_obj.l_fan_temp = temp * 0.0625;
+        }else if (flag==2)
+        {
+            temp_obj.r_fan_temp = temp * 0.0625;
+        }
+        
         // printFloat(temp * 0.0625, 3);
         return temp / 16.0;
     }

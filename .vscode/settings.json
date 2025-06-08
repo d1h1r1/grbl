@@ -1,6 +1,8 @@
 {
   "files.associations": {
     "grbl.h": "c",
-    "spindle_control.h": "c"
+    "spindle_control.h": "c",
+    "rfid_control.h": "c",
+    "probe_control.h": "c"
   }
 }

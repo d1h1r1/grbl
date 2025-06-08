@@ -45,6 +45,10 @@
 #define CAMERA_PORT PORTF
 #define CAMERA_BIT 3 // MEGA2560 Digital Pin 22
 
+#define RFID_ELE_DDR DDRD
+#define RFID_ELE_PORT PORTD
+#define RFID_ELE_BIT 7 // MEGA2560 Digital Pin 38
+
 void switch_init();
 void air_fan_control(uint8_t flag);
 void spindle_l_fan_control(uint8_t flag);
@@ -57,5 +61,7 @@ void l_water_control(uint8_t flag);
 void r_water_control(uint8_t flag);
 void outline_control(uint8_t flag);
 void camera_control(uint8_t flag);
+void rfid_ele_control(uint8_t flag);
+
 
 #endif

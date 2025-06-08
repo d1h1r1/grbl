@@ -70,10 +70,10 @@
 #define LIMIT_PCMSK PCMSK0                                                                                                                                            // 引脚更改中断寄存器
 #define LIMIT_MASK ((1 << X_LIMIT_BIT) | (1 << Y_LIMIT_BIT) | (1 << Z_LIMIT_BIT) | (1 << B_LIMIT_BIT) | (1 << C_LIMIT_BIT) | (1 << D_LIMIT_BIT) | (1) | (1 << 7)) // All limit bits
 
-#define A_LIMIT_DDR DDRD
-#define A_LIMIT_PORT PORTD
-#define A_LIMIT_PIN PIND
-#define A_LIMIT_BIT 7
+#define A_LIMIT_DDR DDRK
+#define A_LIMIT_PORT PORTK
+#define A_LIMIT_PIN PINK
+#define A_LIMIT_BIT 2
 
 // 定义用户控制（CONTROL）输入引脚（循环开始、重置、进给暂停）。
 // 注意：所有CONTROL引脚必须在同一端口上，并且不能与其他输入引脚（限位）在同一端口上。
@@ -81,7 +81,7 @@
 #define CONTROL_PIN PINK
 #define CONTROL_PORT PORTK
 #define CONTROL_RESET_BIT 0       // MEGA2560 Analog Pin 8
-#define CONTROL_FEED_HOLD_BIT 1   // MEGA2560 Analog Pin 9
+#define CONTROL_FEED_HOLD_BIT 0   // MEGA2560 Analog Pin 9
 #define CONTROL_CYCLE_START_BIT 2 // MEGA2560 Analog Pin 10
 #define CONTROL_SAFETY_DOOR_BIT 3 // MEGA2560 Analog Pin 11
 #define CONTROL_INT PCIE2         // 引脚更改中断使能引脚

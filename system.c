@@ -137,11 +137,11 @@ uint8_t system_execute_line(char *line)
     report_grbl_help();
     break; // 显示 Grbl 帮助
   case 'D':
-    getToolStatus();
+    set_rfid(1);
     break;
-  // case 'U':
-  //   tool_home(0);
-  //   break; // 紧刀
+  case 'U':
+    set_rfid(0);
+    break;
   case 'P':
     set_probe(1);
     break;
@@ -194,6 +194,9 @@ uint8_t system_execute_line(char *line)
         break;
       case 'K':
         camera_control(line[3]);
+        break;
+      case 'L':
+        rfid_ele_control(line[3]);
         break;
       default:
         return (STATUS_INVALID_STATEMENT);
