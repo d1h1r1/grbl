@@ -70,12 +70,11 @@ void protocol_main_loop()
   uint8_t char_counter = 0;
   uint8_t c;
   for (;;) {
-    // ds18b20_read_temp();
+    // ds18b20_read_temp_timer2(0);
     // 处理一行传入的串行数据，当数据可用时进行处理。
     // 通过删除空格和注释并将所有字母大写来进行初步过滤。
     while((c = serial_read()) != SERIAL_NO_DATA) {
-      TIMSK2 &= ~(1 << TOIE2); // 禁用 TIMER2 溢出中断
-      // ds18b20_read_temp();
+      // ds18b20_read_temp_timer2(0);
       if ((c == '\n') || (c == '\r')) { // 到达行末
 
         protocol_execute_realtime(); // 运行时命令检查点。
@@ -103,7 +102,6 @@ void protocol_main_loop()
           // 解析并执行 g-code 块。
           report_status_message(gc_execute_line(line));
         }
-
         // 重置下一行的跟踪数据。
         line_flags = 0;
         char_counter = 0;
@@ -152,8 +150,6 @@ void protocol_main_loop()
     // 如果串行读取缓冲区中没有更多字符可处理和执行，
     // 则表示 g-code 流已填满计划缓冲区或已完成。
     // 无论是哪种情况，如果启用了自动循环启动，将执行所有排队的移动。
-
-    TIMSK2 |= (1 << TOIE2);  // 恢复 TIMER2 中断
     protocol_auto_cycle_start();
 
     protocol_execute_realtime();  // 运行时命令检查点。

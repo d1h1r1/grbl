@@ -60,7 +60,7 @@ void set_rfid(uint8_t flag)
         }
         else
         {
-            target[idx] = max_travel;
+            target[idx] = 1.5;
         }
         // 将轴锁应用于本循环中活动的步进端口引脚。
         axislock |= step_pin[idx];

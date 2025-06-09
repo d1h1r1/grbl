@@ -66,29 +66,29 @@ uint8_t system_control_get_state()
 // 引脚变化中断，用于引脚输出命令，即循环开始、进给保持和重置。
 // 仅设置实时命令执行变量，以便在主程序准备好时执行这些命令。
 // 这与从输入串行数据流直接提取的字符型实时命令的工作方式相同。
-ISR(CONTROL_INT_vect)
-{
-  uint8_t pin = system_control_get_state();
-  if (pin)
-  {
-    if (bit_istrue(pin, CONTROL_PIN_INDEX_RESET))
-    {
-      mc_reset();
-    }
-    else if (bit_istrue(pin, CONTROL_PIN_INDEX_CYCLE_START))
-    {
-      bit_true(sys_rt_exec_state, EXEC_CYCLE_START);
-    }
-    else if (bit_istrue(pin, CONTROL_PIN_INDEX_FEED_HOLD))
-    {
-      bit_true(sys_rt_exec_state, EXEC_FEED_HOLD);
-    }
-    else if (bit_istrue(pin, CONTROL_PIN_INDEX_SAFETY_DOOR))
-    {
-      bit_true(sys_rt_exec_state, EXEC_SAFETY_DOOR);
-    }
-  }
-}
+// ISR(CONTROL_INT_vect)
+// {
+//   uint8_t pin = system_control_get_state();
+//   if (pin)
+//   {
+//     if (bit_istrue(pin, CONTROL_PIN_INDEX_RESET))
+//     {
+//       mc_reset();
+//     }
+//     else if (bit_istrue(pin, CONTROL_PIN_INDEX_CYCLE_START))
+//     {
+//       bit_true(sys_rt_exec_state, EXEC_CYCLE_START);
+//     }
+//     else if (bit_istrue(pin, CONTROL_PIN_INDEX_FEED_HOLD))
+//     {
+//       bit_true(sys_rt_exec_state, EXEC_FEED_HOLD);
+//     }
+//     else if (bit_istrue(pin, CONTROL_PIN_INDEX_SAFETY_DOOR))
+//     {
+//       bit_true(sys_rt_exec_state, EXEC_SAFETY_DOOR);
+//     }
+//   }
+// }
 
 // 返回安全门是否开启（T）或关闭（F），基于引脚状态。
 uint8_t system_check_safety_door_ajar()
@@ -118,6 +118,23 @@ void system_execute_startup(char *line)
   }
 }
 
+void print_tool_info(uint8_t* data, size_t index) {
+  // 提取各字段
+  uint8_t tool_type = data[0];
+  uint8_t angle     = data[1];
+  float diameter;
+  memcpy(&diameter, &data[2], 4);
+  uint16_t reserved = (data[6] << 8) | data[7];
+
+  // // 打印解析后的信息
+  // printString("[")
+  // print_uint8_base10(tool_type)
+  // printString(" | 类型: %02d", tool_type);
+  // printString(" 角度: %d", angle);
+  // printString(" 直径: %.2f", diameter);
+  // printString(" 保留: %04X\r\n", reserved);
+}
+
 // 指导并执行来自 protocol_process 的一行格式化输入。虽然主要是
 // 输入流 g-code 块，但这也执行 Grbl 内部命令，例如
 // 设置、启动归位循环和切换开关状态。这与
@@ -141,9 +158,9 @@ uint8_t system_execute_line(char *line)
   case 'S':
     if (line[4] == 0)
     {
+      uint8_t index = line[3] - '0';
       switch (line[2])
       {
-        uint8_t index = line[3] - '0';
         case 'R':
           set_rfid(index);  // $SR
           break;
@@ -156,11 +173,18 @@ uint8_t system_execute_line(char *line)
   case 'A':
     if (line[2] == 0)
     {
-      for (size_t i = 0; i < 5; i++)
-      {
-        serial_write_bytes(settings.tool_data[i], 8);
-      }
-      return 2;
+      for (size_t i = 0; i < 5; i++) {
+        print_tool_info(settings.tool_data[i], i);
+    }
+      // for (size_t i = 0; i < 5; i++)
+      // {
+      //   printString("[");
+      //   printString(i+1);
+      //   printString(":");
+      //   serial_write_bytes(settings.tool_data[i], 8);
+      //   printString("]\r\n");
+      // }
+      break;
     }
     if (line[4] == 0)
     {
@@ -179,7 +203,7 @@ uint8_t system_execute_line(char *line)
         default:
           return (STATUS_INVALID_STATEMENT);
       }
-      return 2;
+      break;
     }
     
   case 'E':
@@ -188,9 +212,9 @@ uint8_t system_execute_line(char *line)
   case 'F':
     if (line[4] == 0)
     {
+      uint8_t index = line[3] - '0';
       switch (line[2])
       {
-      uint8_t index = line[3] - '0';
       case 'A':
         air_fan_control(index);
         break;
