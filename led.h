@@ -19,7 +19,19 @@
 #ifndef led_h
 #define led_h
 
-// 设置从 G-code 解析器接收到的有效移动命令，检查软限位，并执行移动。
-float ws2812b_init_once();
+#define TOOL_LED_PORT PORTL
+#define TOOL_LED_DDR  DDRL
+#define TOOL_LED_BIT  6
+#define TOOL_LED_ENABLE_BIT  7
 
+#define STATUS_LED_PORT PORTG
+#define STATUS_LED_DDR  DDRG
+#define STATUS_LED_BIT  0
+#define STATUS_LED_ENABLE_BIT  1
+
+
+// 设置从 G-code 解析器接收到的有效移动命令，检查软限位，并执行移动。
+void ws2812b_init_once();
+void control_status_led();
+void control_tool_led();
 #endif

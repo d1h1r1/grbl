@@ -27,5 +27,5 @@ extern all_temp temp_obj;
 
 float ds18b20_read_temp_timer2(uint8_t flag);
 
-void time2_init();
+void timer5_init();
 #endif

@@ -533,22 +533,22 @@ void report_realtime_status()
   switch (sys.state)
   {
   case STATE_IDLE:
-    printPgmString(PSTR("Idle"));
+    printPgmString(PSTR("Ready"));
     break;
   case STATE_CYCLE:
-    printPgmString(PSTR("Run"));
+    printPgmString(PSTR("Moving"));
     break;
   case STATE_HOLD:
     if (!(sys.suspend & SUSPEND_JOG_CANCEL))
     {
-      printPgmString(PSTR("Hold"));
+      printPgmString(PSTR("Pause"));
       break;
     } // 在取消 jog 时继续打印 jog 状态。
   case STATE_JOG:
-    printPgmString(PSTR("Jog"));
+    printPgmString(PSTR("Moving"));
     break;
   case STATE_HOMING:
-    printPgmString(PSTR("Home"));
+    printPgmString(PSTR("Homing"));
     break;
   case STATE_ALARM:
     printPgmString(PSTR("Alarm"));

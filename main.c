@@ -25,7 +25,7 @@ int main(void)
 {
   // 在上电时初始化系统。
   switch_init();
-  // time2_init();
+  timer5_init();
   // getDepth_init();
   serial_init();   // 设置串行波特率和中断
   serial1_init();
@@ -88,7 +88,6 @@ int main(void)
     sleep_init();
     plan_reset(); // 清除块缓冲区和规划器变量
     st_reset();   // 清除步进电机子系统变量。
-
     // 急停继电器上电
     DDRE |= (1 << 4); // 将其配置为输出引脚。
     PORTE |= (1<<4);  // 设置引脚为高，继电器默认闭合
@@ -97,7 +96,7 @@ int main(void)
     plan_sync_position();
     gc_sync_position();
     // 打印欢迎消息。指示在上电或重置时发生了初始化。
-    report_init_message();  
+    // report_init_message();  
    
     // 启动 Grbl 主循环。处理程序输入并执行它们。
     protocol_main_loop();

@@ -172,14 +172,14 @@ uint8_t onewire_reset(uint8_t flag) {
 // }
 
 
-void time2_init() {
-    // 配置 Timer2（8位定时器，CTC模式，64分频）
-    TCCR2A = (1 << WGM21);  // CTC模式
-    TCCR2B = (1 << CS22);   // 64分频（16MHz / 64 = 250kHz）
-    OCR2A = 249;            // 1ms = (250kHz / 250) - 1
-    TIMSK2 = (1 << OCIE2A); // 启用比较匹配中断
-    sei();                  // 启用全局中断
-}
+// void time2_init() {
+//     // 配置 Timer2（8位定时器，CTC模式，64分频）
+//     TCCR2A = (1 << WGM21);  // CTC模式
+//     TCCR2B = (1 << CS22);   // 64分频（16MHz / 64 = 250kHz）
+//     OCR2A = 249;            // 1ms = (250kHz / 250) - 1
+//     TIMSK2 = (1 << OCIE2A); // 启用比较匹配中断
+//     sei();                  // 启用全局中断
+// }
 
 // void time2_init() {
 //     // 配置 Timer2（8位定时器，CTC模式，1024分频）
@@ -190,43 +190,62 @@ void time2_init() {
 //     sei();                   // 启用全局中断
 // }
 
-ISR(TIMER2_COMPA_vect) {
+void timer5_init() {
+    cli(); // 先关中断，避免配置时被打断
+
+    TCCR5A = 0;              // 清除控制寄存器 A，设置为普通 CTC 模式
+    TCCR5B = 0;
+    TCNT5 = 0;               // 清零计数器
+    OCR5A = 249;             // 计数到 249 触发中断（1ms）
+
+    TCCR5B |= (1 << WGM52);  // CTC 模式，WGM bits: 4=1,5=0,6=0 => WGM52=1
+    TCCR5B |= (1 << CS51) | (1 << CS50);  // 64 分频：CS52=0,CS51=1,CS50=1 (011)
+
+    TIMSK5 |= (1 << OCIE5A); // 使能 Timer5 比较匹配 A 中断
+
+    sei(); // 开启全局中断
+}
+
+extern volatile bool serial_busy;
+ISR(TIMER5_COMPA_vect) {
+    // sei();
+    if (serial_busy) return;  // 当前串口处理中，跳过
     // 500ms延时等待
     if (tempConversionCounter < 5000) {  // 5000ms = 5000 * 1ms
         tempConversionCounter++;
-        if (tempConversionCounter % 5 == 0) {  // 仅在 5, 10, 15... 时触发
-            switch (tempConversionCounter / 5)
+        if (tempConversionCounter % 50 == 0) {  // 仅在 5, 10, 15... 时触发
+            switch (tempConversionCounter / 50)
             {
-            // case 1:
-            //     ds18b20_read_temp_timer2(0);
-            //     break;
+            case 1:
+                ds18b20_read_temp_timer2(0);
+                break;
             case 2:
                 tempConversionDone = true;
                 conversionStarted = false;
                 break;
-            // case 3:
-            //     ds18b20_read_temp_timer2(0);
-            //     break;
-            // case 4:
-            //     ds18b20_read_temp_timer2(1);
-            //     break;
+            case 3:
+                ds18b20_read_temp_timer2(0);
+                break;
+            case 4:
+                ds18b20_read_temp_timer2(1);
+                break;
             case 5:
                 tempConversionDone = true;
                 conversionStarted = false;
                 break;
-            // case 6:
-            //     ds18b20_read_temp_timer2(1);
-            //     break;
-            // case 7:
-            //     ds18b20_read_temp_timer2(2);
-            //     break;
+            case 6:
+                ds18b20_read_temp_timer2(1);
+                break;
+            case 7:
+                ds18b20_read_temp_timer2(2);
+                break;
             case 8:
                 tempConversionDone = true;
                 conversionStarted = false;
                 break;
-            // case 9:
-            //     ds18b20_read_temp_timer2(2);
-            //     break;
+            case 9:
+                ds18b20_read_temp_timer2(2);
+                break;
             default:
                 break;
             }
@@ -265,12 +284,12 @@ float ds18b20_read_temp_timer2(uint8_t flag) {
         int16_t temp = (temp_h << 8) | temp_l;
         conversionStarted = false;
         tempConversionDone = false;
-        if(flag==0){
+        if(flag==0 && temp * 0.0625 > 5 && temp * 0.0625 < 80){
             temp_obj.spindle_temp = temp * 0.0625;
-        }else if (flag==1)
+        }else if (flag==1 && temp * 0.0625 > 5 && temp * 0.0625 < 80)
         {
             temp_obj.l_fan_temp = temp * 0.0625;
-        }else if (flag==2)
+        }else if (flag==2 && temp * 0.0625 > 5 && temp * 0.0625 < 80)
         {
             temp_obj.r_fan_temp = temp * 0.0625;
         }

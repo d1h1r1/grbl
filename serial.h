@@ -20,7 +20,7 @@
 #define serial_h
 
 #ifndef RX_BUFFER_SIZE
-  #define RX_BUFFER_SIZE 255
+  #define RX_BUFFER_SIZE 510
 #endif
 #ifndef TX_BUFFER_SIZE
   #define TX_BUFFER_SIZE 255

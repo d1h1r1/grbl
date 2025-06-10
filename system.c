@@ -36,6 +36,7 @@ void system_init()
 // 头文件中的 CONTROL_PIN_INDEX 定义。
 uint8_t system_control_get_state()
 {
+  // print_uint8_base2_ndigit(CONTROL_PIN, 8);
   uint8_t control_state = 0;
   uint8_t pin = (CONTROL_PIN & CONTROL_MASK);
 #ifdef INVERT_CONTROL_PIN_MASK
@@ -47,18 +48,6 @@ uint8_t system_control_get_state()
     {
       control_state |= CONTROL_PIN_INDEX_SAFETY_DOOR;
     }
-    if (bit_isfalse(pin, (1 << CONTROL_RESET_BIT)))
-    {
-      control_state |= CONTROL_PIN_INDEX_RESET;
-    }
-    if (bit_isfalse(pin, (1 << CONTROL_FEED_HOLD_BIT)))
-    {
-      control_state |= CONTROL_PIN_INDEX_FEED_HOLD;
-    }
-    if (bit_isfalse(pin, (1 << CONTROL_CYCLE_START_BIT)))
-    {
-      control_state |= CONTROL_PIN_INDEX_CYCLE_START;
-    }
   }
   return (control_state);
 }
@@ -66,33 +55,28 @@ uint8_t system_control_get_state()
 // 引脚变化中断，用于引脚输出命令，即循环开始、进给保持和重置。
 // 仅设置实时命令执行变量，以便在主程序准备好时执行这些命令。
 // 这与从输入串行数据流直接提取的字符型实时命令的工作方式相同。
-// ISR(CONTROL_INT_vect)
-// {
-//   uint8_t pin = system_control_get_state();
-//   if (pin)
-//   {
-//     if (bit_istrue(pin, CONTROL_PIN_INDEX_RESET))
-//     {
-//       mc_reset();
-//     }
-//     else if (bit_istrue(pin, CONTROL_PIN_INDEX_CYCLE_START))
-//     {
-//       bit_true(sys_rt_exec_state, EXEC_CYCLE_START);
-//     }
-//     else if (bit_istrue(pin, CONTROL_PIN_INDEX_FEED_HOLD))
-//     {
-//       bit_true(sys_rt_exec_state, EXEC_FEED_HOLD);
-//     }
-//     else if (bit_istrue(pin, CONTROL_PIN_INDEX_SAFETY_DOOR))
-//     {
-//       bit_true(sys_rt_exec_state, EXEC_SAFETY_DOOR);
-//     }
-//   }
-// }
+ISR(CONTROL_INT_vect)
+{
+  // print_uint8_base2_ndigit(CONTROL_PIN, 8);
+  // uint8_t pin = system_control_get_state();
+  // if (pin)
+  // {
+  //   if (bit_istrue(pin, CONTROL_PIN_INDEX_RESET))
+  //   {
+  //     mc_reset();
+  //   }
+  //   else if (bit_istrue(pin, CONTROL_PIN_INDEX_SAFETY_DOOR))
+  //   {
+  //     bit_true(sys_rt_exec_state, EXEC_SAFETY_DOOR);
+  //   }
+  // }
+}
 
 // 返回安全门是否开启（T）或关闭（F），基于引脚状态。
 uint8_t system_check_safety_door_ajar()
 {
+  // print_uint8_base10((system_control_get_state() & CONTROL_PIN_INDEX_SAFETY_DOOR));
+  // print_uint8_base2_ndigit(system_control_get_state(), 8);
   return (system_control_get_state() & CONTROL_PIN_INDEX_SAFETY_DOOR);
 }
 
@@ -158,6 +142,7 @@ uint8_t system_execute_line(char *line)
   case 'S':
     if (line[4] == 0)
     {
+      serial_write_bytes(line, 4);
       uint8_t index = line[3] - '0';
       switch (line[2])
       {

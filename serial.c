@@ -313,9 +313,11 @@ uint8_t serial2_read()
   }
 }
 
+volatile bool serial_busy = false;
 
 ISR(SERIAL_RX)
 {
+  serial_busy = true;
   uint8_t data = UDR0; // 从接收数据寄存器读取数据
   uint8_t next_head;
 
@@ -367,6 +369,7 @@ ISR(SERIAL_RX)
         }
       }
   }
+  serial_busy = false;
 }
 
 ISR(USART1_RX_vect)

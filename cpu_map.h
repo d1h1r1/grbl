@@ -80,14 +80,18 @@
 #define CONTROL_DDR DDRK
 #define CONTROL_PIN PINK
 #define CONTROL_PORT PORTK
-#define CONTROL_RESET_BIT 0       // MEGA2560 Analog Pin 8
-#define CONTROL_FEED_HOLD_BIT 0   // MEGA2560 Analog Pin 9
-#define CONTROL_CYCLE_START_BIT 0 // MEGA2560 Analog Pin 10
-#define CONTROL_SAFETY_DOOR_BIT 0 // MEGA2560 Analog Pin 11
+#define BRUSH_DETECT_BIT 0       // MEGA2560 Analog Pin 8
+#define CONTROL_SAFETY_DOOR_BIT 3 // MEGA2560 Analog Pin 11
+#define X_ALARM_BIT 4 // MEGA2560 Analog Pin 11
+#define Y_ALARM_BIT 5 // MEGA2560 Analog Pin 11
+#define Z_ALARM_BIT 6 // MEGA2560 Analog Pin 11
+#define STOP_ALARM_BIT 7 // MEGA2560 Analog Pin 11
+
 #define CONTROL_INT PCIE2         // 引脚更改中断使能引脚
 #define CONTROL_INT_vect PCINT2_vect
 #define CONTROL_PCMSK PCMSK2 // 引脚更改中断寄存器
-#define CONTROL_MASK ((1 << CONTROL_RESET_BIT) | (1 << CONTROL_FEED_HOLD_BIT) | (1 << CONTROL_CYCLE_START_BIT) | (1 << CONTROL_SAFETY_DOOR_BIT))
+// #define CONTROL_MASK ((1 << BRUSH_DETECT_BIT) | (1 << CONTROL_SAFETY_DOOR_BIT) | (1 << X_ALARM_BIT) | (1 << Y_ALARM_BIT) | (1 << Z_ALARM_BIT) | (1 << STOP_ALARM_BIT))
+#define CONTROL_MASK 0
 
 // 定义探针开关输入引脚。
 #define PROBE_DDR DDRL

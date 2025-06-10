@@ -11,6 +11,7 @@ void rfid_control_init()
 void set_rfid(uint8_t flag)
 {
     protocol_buffer_synchronize();
+    rfid_ele_control(1);
     limits_disable();
     uint8_t cycle_mask = 1 << B_AXIS;
     uint8_t idx = 4;
@@ -148,6 +149,8 @@ void set_rfid(uint8_t flag)
     gc_sync_position();
     plan_sync_position();
     limits_init();
+    protocol_buffer_synchronize();
+    rfid_ele_control(0);
 }
 
 
