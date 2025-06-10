@@ -8,8 +8,9 @@ void tool_length_zero();
 void tool_control_init()
 {
   // 换刀检测
-  DDRD &= ~(1 << 7); // 设置为输入引脚
-  PORTD |= (1 << 7); // 启用内部上拉电阻。正常高操作。
+  DDRF &= ~(1 << 6); // 设置为输入引脚
+  PORTF |= (1 << 6); // 启用内部上拉电阻。正常高操作。
+  // PORTF &= ~(1 << 6); // 正常低操作。需要外部下拉。
 }
 
 void return_tool()
@@ -19,7 +20,7 @@ void return_tool()
   printPgmString(PSTR("\r\n"));
   // 抬刀
   gc_execute_line("G90G53G0Z-5");
-  gc_execute_line("M4S2000");
+  gc_execute_line("M4S2300");
   protocol_buffer_synchronize();
   if (settings.tool != 0)
   {
@@ -30,7 +31,7 @@ void return_tool()
     gc_execute_line(command);
     // 下降到还刀位置
     float2string(settings.tool_z[settings.tool - 1], z_char, 3);
-    sprintf(command, "G90G53G01Z%sF1000", z_char);
+    sprintf(command, "G90G53G01Z%sF1200", z_char);
     gc_execute_line(command);
     // 松刀
     // 抬刀
@@ -42,9 +43,9 @@ void return_tool()
 
 void getToolStatus(){
   printPgmString(PSTR("[换刀状态: "));
-  uint8_t status = PIND & (1 << 7);
-  print_uint8_base10((PIND & (1 << 7)) ? 1 : 0);
-  printPgmString(PSTR("]"));
+  // uint8_t status = PINF & (1 << 6);
+  print_uint8_base10((PINF & (1 << 6)) ? 1 : 0);
+  printPgmString(PSTR("]//"));
   printPgmString(PSTR("\r\n"));
   return 0;
 }
@@ -54,7 +55,7 @@ void get_tool(uint8_t tool_number)
   // 抬刀
   gc_execute_line("G90G53G0Z-5");
   protocol_buffer_synchronize();
-  gc_execute_line("M3S1500");
+  gc_execute_line("M3S1800");
   // 移动取刀位置
   float2string(settings.tool_x[tool_number - 1], x_char, 3);
   float2string(settings.tool_y[tool_number - 1], y_char, 3);
@@ -62,7 +63,7 @@ void get_tool(uint8_t tool_number)
   gc_execute_line(command);
   // 下降到取刀位置
   float2string(settings.tool_z[tool_number - 1], z_char, 3);
-  sprintf(command, "G90G53G01Z%sF1000", z_char);
+  sprintf(command, "G90G53G01Z%sF1200", z_char);
   gc_execute_line(command);
   protocol_buffer_synchronize();
   delay_ms(500);
