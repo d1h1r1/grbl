@@ -25,16 +25,11 @@ int main(void)
 {
   // 在上电时初始化系统。
   serial_init();   // 设置串行波特率和中断
-  serial1_init();
+  // serial1_init();
   serial2_init();
   settings_init(); // 从 EEPROM 加载 Grbl 设置
   stepper_init();  // 配置步进电机引脚和中断定时器
   system_init();   // 配置引脚引脚和引脚变更中断
-  while (1)
-  {
-    /* code */
-  }
-  
   // memset(sys_position, 0, sizeof(sys_position)); // 清除机器位置。
   sei(); // 启用中断
 
