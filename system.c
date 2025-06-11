@@ -158,17 +158,17 @@ uint8_t system_execute_line(char *line)
   case 'A':
     if (line[2] == 0)
     {
-      for (size_t i = 0; i < 5; i++) {
-        print_tool_info(settings.tool_data[i], i);
-    }
-      // for (size_t i = 0; i < 5; i++)
-      // {
-      //   printString("[");
-      //   printString(i+1);
-      //   printString(":");
-      //   serial_write_bytes(settings.tool_data[i], 8);
-      //   printString("]\r\n");
-      // }
+    //   for (size_t i = 0; i < 5; i++) {
+    //     print_tool_info(settings.tool_data[i], i);
+    // }
+      for (size_t i = 0; i < 5; i++)
+      {
+        // printString("[");
+        // printString(i+1);
+        // printString(":");
+        serial_write_bytes(settings.tool_data[i], 8);
+        // printString("]\r\n");
+      }
       break;
     }
     if (line[4] == 0)

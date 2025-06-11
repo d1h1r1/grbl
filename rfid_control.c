@@ -85,7 +85,7 @@ void set_rfid(uint8_t flag)
         }
         else
         {
-            limit_state = RFID_LIMIT_PIN & (1 << RFID_LIMIT_BIT);
+            limit_state = 0;
         }
         if (axislock & step_pin[idx])
         {
