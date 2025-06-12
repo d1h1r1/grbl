@@ -23,19 +23,19 @@
 
 #ifdef DEFAULTS_GENERIC
 // Grbl通用默认设置。应适用于不同的机器。
-#define DEFAULT_X_STEPS_PER_MM 320.0
-#define DEFAULT_Y_STEPS_PER_MM 320.0
-#define DEFAULT_Z_STEPS_PER_MM 512.0
+#define DEFAULT_X_STEPS_PER_MM 400.0
+#define DEFAULT_Y_STEPS_PER_MM 400.0
+#define DEFAULT_Z_STEPS_PER_MM 400.0
 #define DEFAULT_X_MAX_RATE 4000.0                // mm/min
 #define DEFAULT_Y_MAX_RATE 4000.0                // mm/min
-#define DEFAULT_Z_MAX_RATE 3000.0                // mm/min
-#define DEFAULT_X_ACCELERATION (300.0 * 60 * 60) // 10*60*60 mm/min^2 = 10 mm/sec^2
-#define DEFAULT_Y_ACCELERATION (300.0 * 60 * 60) // 10*60*60 mm/min^2 = 10 mm/sec^2
-#define DEFAULT_Z_ACCELERATION (300.0 * 60 * 60) // 10*60*60 mm/min^2 = 10 mm/sec^2
+#define DEFAULT_Z_MAX_RATE 4000.0                // mm/min
+#define DEFAULT_X_ACCELERATION (400.0 * 60 * 60) // 10*60*60 mm/min^2 = 10 mm/sec^2
+#define DEFAULT_Y_ACCELERATION (400.0 * 60 * 60) // 10*60*60 mm/min^2 = 10 mm/sec^2
+#define DEFAULT_Z_ACCELERATION (400.0 * 60 * 60) // 10*60*60 mm/min^2 = 10 mm/sec^2
 #define DEFAULT_X_MAX_TRAVEL 400.0               // mm
 #define DEFAULT_Y_MAX_TRAVEL 400.0               // mm
 #define DEFAULT_Z_MAX_TRAVEL 400.0               // mm
-#define DEFAULT_SPINDLE_RPM_MAX 40000.0          // rpm
+#define DEFAULT_SPINDLE_RPM_MAX 20000.0          // rpm
 #define DEFAULT_SPINDLE_RPM_MIN 0.0              // rpm
 #define DEFAULT_STEP_PULSE_MICROSECONDS 10
 #define DEFAULT_STEPPING_INVERT_MASK 0
@@ -46,7 +46,7 @@
 #define DEFAULT_ARC_TOLERANCE 0.002       // mm
 #define DEFAULT_REPORT_INCHES 0           // false
 #define DEFAULT_INVERT_ST_ENABLE 0        // false
-#define DEFAULT_INVERT_LIMIT_PINS 1       // false
+#define DEFAULT_INVERT_LIMIT_PINS 0       // false
 #define DEFAULT_SOFT_LIMIT_ENABLE 0       // false
 #define DEFAULT_HARD_LIMIT_ENABLE 1       // false
 #define DEFAULT_INVERT_PROBE_PIN 1        // false
@@ -443,24 +443,24 @@
 #endif
 
 #ifdef DEFAULTS_ABC_AXIS
-#define DEFAULT_A_STEPS_PER_MM 320.0
-#define DEFAULT_A_MAX_RATE 500.0                // mm/min
-#define DEFAULT_A_ACCELERATION (10.0 * 60 * 60) // 10*60*60 mm/min^2 = 10 mm/sec^2
+#define DEFAULT_A_STEPS_PER_MM 177.77
+#define DEFAULT_A_MAX_RATE 4000.0                // mm/min
+#define DEFAULT_A_ACCELERATION (400.0 * 60 * 60) // 10*60*60 mm/min^2 = 10 mm/sec^2
 #define DEFAULT_A_MAX_TRAVEL 200.0              // mm
 
 #define DEFAULT_B_STEPS_PER_MM 320.0
-#define DEFAULT_B_MAX_RATE 500.0                // mm/min
-#define DEFAULT_B_ACCELERATION (10.0 * 60 * 60) // 10*60*60 mm/min^2 = 10 mm/sec^2
+#define DEFAULT_B_MAX_RATE 4000.0                // mm/min
+#define DEFAULT_B_ACCELERATION (400.0 * 60 * 60) // 10*60*60 mm/min^2 = 10 mm/sec^2
 #define DEFAULT_B_MAX_TRAVEL 200.0              // mm
 
 #define DEFAULT_C_STEPS_PER_MM 320.0
-#define DEFAULT_C_MAX_RATE 500.0                // mm/min
-#define DEFAULT_C_ACCELERATION (10.0 * 60 * 60) // 10*60*60 mm/min^2 = 10 mm/sec^2
+#define DEFAULT_C_MAX_RATE 4000.0                // mm/min
+#define DEFAULT_C_ACCELERATION (400.0 * 60 * 60) // 10*60*60 mm/min^2 = 10 mm/sec^2
 #define DEFAULT_C_MAX_TRAVEL 200.0              // mm
 
 #define DEFAULT_D_STEPS_PER_MM 320.0
-#define DEFAULT_D_MAX_RATE 500.0                // mm/min
-#define DEFAULT_D_ACCELERATION (10.0 * 60 * 60) // 10*60*60 mm/min^2 = 10 mm/sec^2
+#define DEFAULT_D_MAX_RATE 4000.0                // mm/min
+#define DEFAULT_D_ACCELERATION (400.0 * 60 * 60) // 10*60*60 mm/min^2 = 10 mm/sec^2
 #define DEFAULT_D_MAX_TRAVEL 200.0              // mm
 #endif
 
