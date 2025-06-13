@@ -37,10 +37,10 @@ static void report_util_gcode_modes_M() { printPgmString(PSTR(" M")); }
 static void report_util_axis_values(float *axis_value)
 {
   uint8_t idx;
-  for (idx = 0; idx < N_AXIS; idx++)
+  for (idx = 0; idx < 4; idx++)
   {
     printFloat_CoordValue(axis_value[idx]);
-    if (idx < (N_AXIS - 1))
+    if (idx < (4 - 1))
     {
       serial_write(',');
     }
@@ -116,6 +116,8 @@ void report_status_message(uint8_t status_code)
   {
   case STATUS_OK: // STATUS_OK
     printPgmString(PSTR("ok\r\n"));
+    break;
+  case 2:
     break;
   default:
     printPgmString(PSTR("error:"));
@@ -531,30 +533,22 @@ void report_realtime_status()
   switch (sys.state)
   {
   case STATE_IDLE:
-    printPgmString(PSTR("Idle"));
+    printPgmString(PSTR("Ready"));
     break;
   case STATE_CYCLE:
-    printPgmString(PSTR("Run"));
+    printPgmString(PSTR("Moving"));
     break;
   case STATE_HOLD:
     if (!(sys.suspend & SUSPEND_JOG_CANCEL))
     {
-      printPgmString(PSTR("Hold:"));
-      if (sys.suspend & SUSPEND_HOLD_COMPLETE)
-      {
-        serial_write('0');
-      } // 准备恢复
-      else
-      {
-        serial_write('1');
-      } // 正在保持
+      printPgmString(PSTR("Pause"));
       break;
     } // 在取消 jog 时继续打印 jog 状态。
   case STATE_JOG:
-    printPgmString(PSTR("Jog"));
+    printPgmString(PSTR("Moving"));
     break;
   case STATE_HOMING:
-    printPgmString(PSTR("Home"));
+    printPgmString(PSTR("Homing"));
     break;
   case STATE_ALARM:
     printPgmString(PSTR("Alarm"));
@@ -630,6 +624,12 @@ void report_realtime_status()
   print_uint8_base10(settings.tool);
   printPgmString(PSTR("|F:"));
   printFloat_RateValue(gc_state.feed_rate);
+  printPgmString(PSTR("|ST:"));
+  printFloat_RateValue(temp_obj.spindle_temp);
+  printPgmString(PSTR("|LFT:"));
+  printFloat_RateValue(temp_obj.l_fan_temp);
+  printPgmString(PSTR("|RFT:"));
+  printFloat_RateValue(temp_obj.r_fan_temp);
   printPgmString(PSTR("|S:"));
   printFloat(gc_state.spindle_speed, N_DECIMAL_RPMVALUE);
   printPgmString(PSTR("|M:"));
@@ -800,32 +800,6 @@ void report_realtime_status()
     // print_uint8_base10(sys.r_override);
     // serial_write(',');
     // print_uint8_base10(sys.spindle_speed_ovr);
-
-    uint8_t sp_state = spindle_get_state();
-    uint8_t cl_state = coolant_get_state();
-    if (sp_state || cl_state)
-    {
-      printPgmString(PSTR("|A:"));
-      if (sp_state)
-      { // != SPINDLE_STATE_DISABLE
-        if (sp_state == SPINDLE_STATE_CW)
-        {
-          serial_write('S');
-        } // 顺时针
-        else
-        {
-          serial_write('C');
-        } // 逆时针
-      }
-      if (cl_state & COOLANT_STATE_FLOOD)
-      {
-        serial_write('F');
-      }
-      if (cl_state & COOLANT_STATE_MIST)
-      {
-        serial_write('M');
-      }
-    }
   }
 #endif
 
