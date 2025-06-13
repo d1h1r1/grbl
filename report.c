@@ -624,12 +624,12 @@ void report_realtime_status()
   print_uint8_base10(settings.tool);
   printPgmString(PSTR("|F:"));
   printFloat_RateValue(gc_state.feed_rate);
-  printPgmString(PSTR("|ST:"));
-  printFloat_RateValue(temp_obj.spindle_temp);
-  printPgmString(PSTR("|LFT:"));
-  printFloat_RateValue(temp_obj.l_fan_temp);
-  printPgmString(PSTR("|RFT:"));
-  printFloat_RateValue(temp_obj.r_fan_temp);
+  // printPgmString(PSTR("|ST:"));
+  // printFloat_RateValue(temp_obj.spindle_temp);
+  // printPgmString(PSTR("|LFT:"));
+  // printFloat_RateValue(temp_obj.l_fan_temp);
+  // printPgmString(PSTR("|RFT:"));
+  // printFloat_RateValue(temp_obj.r_fan_temp);
   printPgmString(PSTR("|S:"));
   printFloat(gc_state.spindle_speed, N_DECIMAL_RPMVALUE);
   printPgmString(PSTR("|M:"));
