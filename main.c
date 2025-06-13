@@ -25,7 +25,7 @@ int main(void)
 {
   // 在上电时初始化系统。
   switch_init();
-  timer5_init();
+  // timer5_init();
   // getDepth_init();
   serial_init();   // 设置串行波特率和中断
   serial1_init();

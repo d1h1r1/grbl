@@ -208,7 +208,7 @@ void timer5_init() {
 
 extern volatile bool serial_busy;
 ISR(TIMER5_COMPA_vect) {
-    // sei();
+    sei();
     if (serial_busy) return;  // 当前串口处理中，跳过
     // 500ms延时等待
     if (tempConversionCounter < 5000) {  // 5000ms = 5000 * 1ms
